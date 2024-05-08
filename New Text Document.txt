@@ -10,13 +10,26 @@ interface projectpocprops {
 const Projectpoc: React.FC<projectpocprops> = ({ selectedOption1 }) => {
   const [tableData, setTableData] = useState([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [person1Value, setPerson1Value] = useState('');
-  const [person2Value, setPerson2Value] = useState('');
+
   const columns = [
     { title: 'project', dataIndex: 'project_name', key: 'project_name' },
     { title: 'DFT Lead', dataIndex: 'dft_lead', key: 'dft_lead' },
     { title: 'DV Lead', dataIndex: 'dv_lead', key: 'dv_lead' },
   ];
+
+  const fetchTableData = async () => {
+    try {
+      if (!selectedOption1) {
+        message.error('Please select Project before fetching data.');
+        return;
+      }
+      const apiUrl = `http://127.0.0.1:5000/view_leads_info?selectedOption1=${selectedOption1}`;
+      const response = await axios.get(apiUrl);
+      setTableData(response.data);
+    } catch (error) {
+      console.error('Error fetching table data:', error);
+    }
+  };
 
   const showModal = () => {
     if (selectedOption1) {
@@ -26,29 +39,30 @@ const Projectpoc: React.FC<projectpocprops> = ({ selectedOption1 }) => {
     }
   };
 
-  const fetchTableData = async () => {
-    try {
-      // Replace with your backend API endpoint for fetching table data
-      const apiUrl = `http://127.0.0.1:5000/view_leads_info?selectedOption1=${selectedOption1}`;
-
-      const response = await axios.get(apiUrl);
-
-      setTableData(response.data);
-
-      console.log(response.data);
-    } catch (error) {
-      console.error('Error fetching table data:', error);
-    }
-  };
-
   const handleOk = () => {
     setIsModalVisible(false);
-    setPerson1Value('');
-    setPerson2Value('');
   };
 
   const handleCancel = () => {
     setIsModalVisible(false);
+  };
+
+  const onFinish = async (values: any) => {
+    try {
+      const finalBackendUrl = 'http://127.0.0.1:5000/add_leads_into_tss';
+      const payload = {
+        selectedOption1,
+        dftLead: values.DftLead,
+        dvLead: values.DvLead
+      };
+      await axios.post(finalBackendUrl, payload);
+      message.success('Form submitted successfully!');
+      handleOk();
+      fetchTableData(); // Refresh table data after submission
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      message.error('Failed to submit form. Please try again later.');
+    }
   };
 
   useEffect(() => {
@@ -57,43 +71,27 @@ const Projectpoc: React.FC<projectpocprops> = ({ selectedOption1 }) => {
     }
   }, [selectedOption1]);
 
-  const onFinish = (values: any) => {
-    const finalBackendUrl = `https://127.0.0.1:5000/add_leads_into_tss`;
-
-    const payload = {
-      selectedOption1: selectedOption1,
-      dftLead: values.DftLead,
-      dvLead: values.DvLead
-    };
-
-    axios
-      .post(finalBackendUrl, payload)
-      .then(() => {
-        message.success('Form submitted successfully!'); 
-        handleOk();
-      })
-      .catch((error) => {
-        console.error('Error submitting form:', error);
-        message.error('Failed to submit form. Please try again later.');
-      });
-  };
-
   return (
     <div>
       <Button type="primary" onClick={showModal}>
         Add/update Project POC
       </Button>
-      <Modal title="Add/update Project POC" visible={isModalVisible} onOk={onFinish} onCancel={handleCancel}>
+      <Modal title="Add/update Project POC" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
         <Form onFinish={onFinish}>
           <Form.Item label="DFT Lead" name="DftLead" rules={[{ required: true, message: 'Please enter DFT Lead' }]}>
-            <Input value={person1Value} onChange={e => setPerson1Value(e.target.value)} />
+            <Input />
           </Form.Item>
-          <Form.Item label="DV Lead" name="DvLead" rules={[{ required: true, message: 'Please enter Dv Lead' }]}>
-            <Input value={person2Value} onChange={e => setPerson2Value(e.target.value)} />
+          <Form.Item label="DV Lead" name="DvLead" rules={[{ required: true, message: 'Please enter DV Lead' }]}>
+            <Input />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Submit
+            </Button>
           </Form.Item>
         </Form>
       </Modal>
-      <Table columns={columns} dataSource={tableData} scroll={{ x: 'max-content' }}></Table>
+      <Table columns={columns} dataSource={tableData} scroll={{ x: 'max-content' }} />
     </div>
   );
 };
