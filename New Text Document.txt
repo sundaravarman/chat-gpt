@@ -1,99 +1,748 @@
-import React, { useEffect, useState } from 'react';
-import { Table, Button, Modal, Form, message, Input } from 'antd';
-import 'antd/dist/antd.css';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button, Tabs, Input, Form, Table, message, Select } from 'antd';
 import axios from 'axios';
 
-interface projectpocprops {
-  selectedOption1: string | null;
-}
+const { TabPane } = Tabs;
 
-const Projectpoc: React.FC<projectpocprops> = ({ selectedOption1 }) => {
+const { Option } = Select;
+
+const SkuDefinition = ({ selectedOption1, selectedOption2, selectedOption4 }) => {
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const [formData, setAddFormData] = useState({
+    qbinMcn: '',
+    qbinShortName: '',
+    qbinFeaturing: '',
+  });
+  const [formData2, setFormData2] = useState({
+    removeqbinMcn: '',
+    removeqbinFeaturing: '',
+  });
+  const [formData3, setFormData3] = useState({
+    deleteqbinFeaturing: '',
+  });
+  const [formData4, setAddFormData4] = useState({
+    SKUMcn: '',
+    SKUShortName: '',
+    SKUFeaturing: '',
+  });
+  const [formData5, setFormData5] = useState({
+    renameskuMcn: '',
+    renameskuFeaturing: '',
+  });
+  const [formData6, setFormData6] = useState({
+    deleteskuFeaturing: '',
+  });
+  const [successMessage] = useState('');
   const [tableData, setTableData] = useState([]);
-  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [tableData2, setTableData2] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [qbinid, setbinid] = useState<string | null>(null);
+  const [qskuid, setqskuid] = useState<string | null>(null);
+  const [qbinname, setbinname] = useState<string[]>([]);
+  const [qsku, setsku] = useState<string[]>([]);
+  const [loadingqbin, setLoadingqbin] = useState(false);
+  const [loadingqbinname, setloadingqbinname] = useState(false);
+  const [selectAllqbinname, setSelectAllqbinname] = useState(false);
+  const [selectAllqsku, setselectAllqsku] = useState(false);
+  const [options1, setOptions1] = useState<string[]>([]);
+  const [options3, setOptions3] = useState<string[]>([]);
+  const [qskuFeaturing, setqskuFeaturing] = useState<string[]>([]);
+  const [SkuIdOptions, setSkuIdOptions] = useState<string[]>([]);
 
-  const columns = [
-    { title: 'project', dataIndex: 'project_name', key: 'project_name' },
-    { title: 'DFT Lead', dataIndex: 'dft_lead', key: 'dft_lead' },
-    { title: 'DV Lead', dataIndex: 'dv_lead', key: 'dv_lead' },
-  ];
+  const getqbindata = async () => {
+    setLoadingqbin(true);
+    axios
+      .get(
+        `https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/get_qbinid?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`,
+      ) // Replace with your actual API endpoint
+
+      .then(response => {
+        setOptions1(response.data);
+
+        // setLoading1(false);
+      });
+  };
+
+  const getqskuid = async () => {
+    axios
+      .get(
+        `https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/get_qskuid?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`,
+      ) // Replace with your actual API endpoint
+
+      .then(response => {
+        setSkuIdOptions(response.data);
+
+        // setLoading1(false);
+      });
+  };
+
+  const getqbinname = async () => {
+    if (selectedOption1 && selectedOption2) {
+      setloadingqbinname(true);
+
+      axios
+        .get(
+          `https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/get_qbinname?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`,
+        )
+
+        .then(response => {
+          const options = response.data;
+
+          options.unshift('All');
+
+          setOptions3(options);
+
+          setloadingqbinname(false);
+        });
+    }
+  };
+
+  const getskufeaturing = async () => {
+    if (selectedOption1 && selectedOption2) {
+      axios
+        .get(
+          `https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/get_Qskufeaturing?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`,
+        )
+
+        .then(response => {
+          const options = response.data;
+
+          options.unshift('All');
+
+          setqskuFeaturing(options);
+        });
+    }
+  };
 
   const fetchTableData = async () => {
+    setLoading(true);
     try {
-      if (!selectedOption1) {
-        message.error('Please select Project before fetching data.');
-        return;
-      }
-      const apiUrl = `http://127.0.0.1:5000/view_leads_info?selectedOption1=${selectedOption1}`;
+      // Replace with your backend API endpoint for fetching table data
+      const apiUrl = `https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/get_qbin_data?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`;
+
+      // Send a GET request to the backend
       const response = await axios.get(apiUrl);
+
+      // Update the table data in the state
       setTableData(response.data);
     } catch (error) {
       console.error('Error fetching table data:', error);
     }
+    setLoading(false);
   };
-
-  const showModal = () => {
-    if (selectedOption1) {
-      setIsModalVisible(true);
-    } else {
-      message.error('Please select Project before making Add/update Project POC');
-    }
-  };
-
-  const handleOk = () => {
-    setIsModalVisible(false);
-  };
-
-  const handleCancel = () => {
-    setIsModalVisible(false);
-  };
-
-  const onFinish = async (values: any) => {
+  const fetchTableData2 = async () => {
+    setLoading(true);
     try {
-      const finalBackendUrl = 'http://127.0.0.1:5000/add_leads_into_tss';
-      const payload = {
-        selectedOption1,
-        dftLead: values.DftLead,
-        dvLead: values.DvLead
-      };
-      await axios.post(finalBackendUrl, payload);
-      message.success('Form submitted successfully!');
-      handleOk();
-      fetchTableData(); // Refresh table data after submission
+      // Replace with your backend API endpoint for fetching table data
+      const apiUrl = `https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/get_sku_data?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`;
+
+      // Send a GET request to the backend
+      const response = await axios.get(apiUrl);
+
+      // Update the table data in the state
+      setTableData2(response.data);
     } catch (error) {
-      console.error('Error submitting form:', error);
-      message.error('Failed to submit form. Please try again later.');
+      console.error('Error fetching table data:', error);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
-    if (selectedOption1) {
+    if (selectedOption1 && selectedOption2) {
+      getqbindata();
+    }
+  }, [selectedOption1, selectedOption2]);
+
+  useEffect(() => {
+    if (selectedOption1 && selectedOption2) {
+      getqskuid();
+    }
+  }, [selectedOption1, selectedOption2]);
+
+  useEffect(() => {
+    if (selectedOption1 && selectedOption2) {
+      getqbinname();
+    }
+  }, [selectedOption1, selectedOption2]);
+
+  useEffect(() => {
+    if (selectedOption1 && selectedOption2) {
+      getskufeaturing();
+    }
+  }, [selectedOption1, selectedOption2]);
+
+  useEffect(() => {
+    if (selectedOption1 && selectedOption2) {
       fetchTableData();
     }
-  }, [selectedOption1]);
+  }, [selectedOption1, selectedOption2]);
+
+  useEffect(() => {
+    if (selectedOption1 && selectedOption2) {
+      fetchTableData2();
+    }
+  }, [selectedOption1, selectedOption2]);
+
+  const handleSkuClick = () => {
+    setModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+  };
+
+  const handleAddQBIN = async () => {
+    try {
+      const apiUrl = 'https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/add_qbin_data';
+
+      // Merge the form data with selectedOption1 and selectedOption2
+      const requestData = {
+        ...formData,
+        selectedOption1,
+        selectedOption2,
+      };
+
+      // Send the data to the backend using Axios
+      const response = await axios.post(apiUrl, requestData);
+
+      // Handle the response
+      if (response.status === 200) {
+        // Display success message from the response data
+        message.success(response.data.message);
+        getqskuid();
+        getqbinname();
+        getqbindata();
+        // Clear the form data
+        setAddFormData({
+          qbinMcn: '',
+          qbinShortName: '',
+          qbinFeaturing: '',
+        });
+        fetchTableData();
+        setLoading(false);
+        // Fetch updated table data
+      }
+    } catch (error) {
+      // Handle errors, e.g., show error message, log the error, etc.
+      console.error('Error sending data to backend:', error);
+    }
+  };
+  const handleRenameUpdate = async () => {
+    try {
+      const apiUrl = 'https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/update_qbin_data';
+
+      // Merge the form data with selectedOption1 and selectedOption2
+      const requestData = {
+        ...formData2,
+        selectedOption1,
+        selectedOption2,
+        qbinid,
+      };
+
+      // Send the data to the backend using Axios
+      const response = await axios.post(apiUrl, requestData);
+
+      // Handle the response
+      if (response.status === 200) {
+        // Display success message from the response data
+        message.success(response.data.message);
+        getqbindata();
+        getqbinname();
+        // Clear the form data
+        setFormData2({
+          removeqbinMcn: '',
+          removeqbinFeaturing: '',
+        });
+        fetchTableData();
+        setLoading(false);
+      }
+    } catch (error) {
+      // Handle errors, e.g., show error message, log the error, etc.
+      console.error('Error sending data to backend:', error);
+    }
+  };
+  const handleremoveqbin = async () => {
+    try {
+      const apiUrl = 'https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/remove_qbin_data';
+
+      // Merge the form data with selectedOption1 and selectedOption2
+      const requestData = {
+        ...formData3,
+        selectedOption1,
+        selectedOption2,
+        selectedOption4,
+        qbinname,
+      };
+
+      // Send the data to the backend using Axios
+      const response = await axios.post(apiUrl, requestData);
+
+      // Handle the response
+      if (response.status === 200) {
+        // Display success message from the response data
+        message.success(response.data.message);
+        // Clear the form data
+        getqbinname();
+        setFormData3({
+          deleteqbinFeaturing: '',
+        });
+        fetchTableData();
+        // Fetch updated table data
+      }
+    } catch (error) {
+      // Handle errors, e.g., show error message, log the error, etc.
+      console.error('Error sending data to backend:', error);
+    }
+  };
+  const handleAddSKU = async () => {
+    try {
+      const apiUrl = 'https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/add_sku_data';
+
+      // Merge the form data with selectedOption1 and selectedOption2
+      const requestData = {
+        ...formData4,
+        selectedOption1,
+        selectedOption2,
+        qbinname,
+      };
+
+      // Send the data to the backend using Axios
+      const response = await axios.post(apiUrl, requestData);
+
+      // Handle the response
+      if (response.status === 200) {
+        // Display success message from the response data
+        message.success(response.data.message);
+        getqbinname();
+        // Clear the form data
+        setAddFormData4({
+          SKUMcn: '',
+          SKUShortName: '',
+          SKUFeaturing: '',
+        });
+        fetchTableData2();
+        // Fetch updated table data
+      }
+    } catch (error) {
+      // Handle errors, e.g., show error message, log the error, etc.
+      console.error('Error sending data to backend:', error);
+    }
+  };
+  const handleRenameUpdatesku = async () => {
+    try {
+      const apiUrl = 'https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/update_sku_data';
+
+      // Merge the form data with selectedOption1 and selectedOption2
+      const requestData = {
+        ...formData5,
+        selectedOption1,
+        selectedOption2,
+        qskuid,
+        qbinname,
+      };
+
+      // Send the data to the backend using Axios
+      const response = await axios.post(apiUrl, requestData);
+
+      // Handle the response
+      if (response.status === 200) {
+        // Display success message from the response data
+        message.info(response.data.message);
+        getskufeaturing();
+        // Clear the form data
+        setFormData5({
+          renameskuMcn: '',
+          renameskuFeaturing: '',
+        });
+        fetchTableData2();
+        // Fetch updated table data
+      }
+    } catch (error) {
+      // Handle errors, e.g., show error message, log the error, etc.
+      console.error('Error sending data to backend:', error);
+    }
+  };
+  const handleremovesku = async () => {
+    try {
+      const apiUrl = 'https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/remove_sku_data';
+
+      // Merge the form data with selectedOption1 and selectedOption2
+      const requestData = {
+        ...formData6,
+        selectedOption1,
+        selectedOption2,
+        qsku,
+      };
+
+      // Send the data to the backend using Axios
+      const response = await axios.post(apiUrl, requestData);
+
+      // Handle the response
+      if (response.status === 200) {
+        // Display success message from the response data
+        message.success(response.data.message);
+        getskufeaturing();
+        // Clear the form data
+        setFormData6({
+          deleteskuFeaturing: '',
+        });
+        fetchTableData2();
+        // Fetch updated table data
+      }
+    } catch (error) {
+      // Handle errors, e.g., show error message, log the error, etc.
+      console.error('Error sending data to backend:', error);
+    }
+  };
+
+  const handlegetqbinChange = value => {
+    setLoadingqbin(true);
+    setbinid(value);
+    setLoadingqbin(false);
+  };
+
+  const handlegetqskuidChange = value => {
+    setqskuid(value);
+  };
+  const handleSelect3Change = value => {
+    if (value.includes('All')) {
+      setbinname(options3.filter(option => option !== 'All'));
+
+      setSelectAllqbinname(true);
+    } else {
+      // Unselect "All" option
+
+      setbinname(value.filter(val => val !== 'All'));
+
+      setSelectAllqbinname(false);
+    }
+  };
+
+  const handleremoveskuChange = value => {
+    if (value.includes('All')) {
+      setsku(qskuFeaturing.filter(option => option !== 'All'));
+
+      setselectAllqsku(true);
+    } else {
+      // Unselect "All" option
+
+      setsku(value.filter(val => val !== 'All'));
+
+      setselectAllqsku(false);
+    }
+  };
+
+  // Custom function to display selected values
+
+  const renderSelections = () => {
+    if (selectAllqbinname) {
+      return ['All'];
+    }
+
+    return qskuFeaturing;
+  };
+
+  const renderskuSelections = () => {
+    if (selectAllqsku) {
+      return ['All'];
+    }
+
+    return qsku;
+  };
+
+  const columns = [
+    { title: 'QBIN ID', dataIndex: 'qbin_mcn', key: 'qbin_mcn' },
+    { title: 'QBIN Description', dataIndex: 'qbin_short_name', key: 'qbin_short_name' },
+    { title: 'QBIN NAME', dataIndex: 'qbin_featuring', key: 'qbin_featuring' },
+  ];
+  const columns2 = [
+    { title: 'QSKU ID', dataIndex: 'qbin_mcn', key: 'qbin_mcn' },
+    { title: 'QSKU Description', dataIndex: 'qbin_short_name', key: 'qbin_short_name' },
+    { title: 'QSKU Featuring', dataIndex: 'qbin_featuring', key: 'qbin_featuring' },
+  ];
 
   return (
-    <div>
-      <Button type="primary" onClick={showModal}>
-        Add/update Project POC
+    <>
+      <Button type="primary" onClick={handleSkuClick}>
+        Qultivate Definition
       </Button>
-      <Modal title="Add/update Project POC" visible={isModalVisible} onOk={handleOk} onCancel={handleCancel}>
-        <Form onFinish={onFinish}>
-          <Form.Item label="DFT Lead" name="DftLead" rules={[{ required: true, message: 'Please enter DFT Lead' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item label="DV Lead" name="DvLead" rules={[{ required: true, message: 'Please enter DV Lead' }]}>
-            <Input />
-          </Form.Item>
-          <Form.Item>
-            <Button type="primary" htmlType="submit">
-              Submit
-            </Button>
-          </Form.Item>
-        </Form>
+      <Modal
+        title={`SKU Definition for ${selectedOption1} - ${selectedOption2}`}
+        visible={modalVisible}
+        onCancel={handleModalClose}
+        footer={null}
+        width={800}
+      >
+        <Tabs defaultActiveKey="1">
+          <TabPane tab="Add QBIN" key="1">
+            <Form onFinish={handleAddQBIN}>
+              <Form.Item label="QBIN ID" name="qbinMcn" rules={[{ required: true, message: 'Please enter QBIN ID' }]}>
+                <Input
+                  placeholder="ID in TSS,e.g. QBIN_1"
+                  value={formData.qbinMcn}
+                  onChange={e => setAddFormData({ ...formData, qbinMcn: e.target.value })}
+                />
+              </Form.Item>
+              <Form.Item
+                label="QBIN Description"
+                name="qbinShortName"
+                rules={[{ required: true, message: 'Please enter QBIN Description' }]}
+              >
+                <Input
+                  placeholder="any text description, e.g. No gold plus"
+                  value={formData.qbinShortName}
+                  onChange={e => setAddFormData({ ...formData, qbinShortName: e.target.value })}
+                />
+              </Form.Item>
+              <Form.Item
+                label="QBIN NAME"
+                name="qbinFeaturing"
+                rules={[{ required: true, message: 'Please enter QBIN Featuring' }]}
+              >
+                <Input
+                  placeholder="Name must match ATE TP,e.g. NO_CPUCORE0"
+                  value={formData.qbinFeaturing}
+                  onChange={e => setAddFormData({ ...formData, qbinFeaturing: e.target.value })}
+                />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Add QBIN
+                </Button>
+              </Form.Item>
+            </Form>
+            <Table columns={columns} dataSource={tableData} loading={loading} />
+          </TabPane>
+          <TabPane tab="Rename/Update QBIN" key="2">
+            <Form onFinish={handleRenameUpdate}>
+              <Form.Item
+                label="QBIN ID"
+                name="qbinMcnUpdate"
+                rules={[{ required: true, message: 'Please enter updated QBIN ID' }]}
+              >
+                <Select
+                  showSearch
+                  style={{ width: 250, marginLeft: '20px' }}
+                  placeholder="Select Qbin ID"
+                  optionFilterProp="children"
+                  onChange={handlegetqbinChange}
+                  value={qbinid}
+                  loading={loadingqbin}
+                >
+                  {Array.isArray(options1)
+                    ? options1.map(option => (
+                      <Option key={option} value={option}>
+                        {option}
+                      </Option>
+                    ))
+                    : null}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                label="QBIN Name"
+                name="qbinFeaturingUpdate"
+                rules={[{ required: true, message: 'Please enter updated QBIN Name' }]}
+              >
+                <Input
+                  placeholder="New QBIN_NAME for the mentioned QBIN_ID, Name must match ATE TP,e.g. NO_CPUCORE0"
+                  value={formData.qbinFeaturing}
+                  onChange={e => setFormData2({ ...formData2, removeqbinFeaturing: e.target.value })}
+                />
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" danger htmlType="submit">
+                  Rename/Update QBIN
+                </Button>
+              </Form.Item>
+            </Form>
+            <Table columns={columns} dataSource={tableData} loading={loading} />
+          </TabPane>
+
+          <TabPane tab="Remove QBIN" key="3">
+            <Form onFinish={handleremoveqbin}>
+              <Form.Item
+                label="Qbin Name"
+                name="Qbin_Featuring"
+                rules={[{ required: true, message: 'Please enter Qbin_Featuring to remove' }]}
+              >
+                <Select
+                  showSearch
+                  mode="multiple"
+                  style={{ width: 500 }}
+                  placeholder="Select Qbin name"
+                  optionFilterProp="children"
+                  onChange={handleSelect3Change}
+                  value={renderSelections()}
+                  loading={loadingqbinname}
+                  disabled={!selectedOption1 || !selectedOption2}
+                >
+                  {Array.isArray(options3)
+                    ? options3.map(option => (
+                      <Option key={option} value={option}>
+                        {option}
+                      </Option>
+                    ))
+                    : null}
+                </Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" danger htmlType="submit">
+                  Remove Qbin
+                </Button>
+              </Form.Item>
+            </Form>
+            <Table columns={columns} dataSource={tableData} loading={loading} />
+          </TabPane>
+          <TabPane tab="Add SKU" key="4">
+            <Form onFinish={handleAddSKU}>
+              <Form.Item label="QSKU ID" name="qbinMcn" rules={[{ required: true, message: 'Please enter SKU ID' }]}>
+                <Input
+                  placeholder="ID in TSS,e.g. QSKU_1"
+                  value={formData4.SKUMcn}
+                  onChange={e => setAddFormData4({ ...formData4, SKUMcn: e.target.value })}
+                />
+              </Form.Item>
+              <Form.Item
+                label="SKU Description"
+                name="skuShortName"
+                rules={[{ required: true, message: 'Please enter SKU Short Name' }]}
+              >
+                <Input
+                  placeholder="any text description, e.g. SM6450-2:No MODEM,No camera,No Gps"
+                  value={formData4.SKUShortName}
+                  onChange={e => setAddFormData4({ ...formData4, SKUShortName: e.target.value })}
+                />
+              </Form.Item>
+              <Form.Item
+                label="QSKU Featuring"
+                name="skuFeaturing"
+                rules={[{ required: true, message: 'Please enter SKU Featuring' }]}
+              >
+                <Select
+                  showSearch
+                  mode="multiple"
+                  style={{ width: 500 }}
+                  placeholder="Select Qbin name"
+                  optionFilterProp="children"
+                  onChange={handleSelect3Change}
+                  value={renderSelections()}
+                  loading={loadingqbinname}
+                  disabled={!selectedOption1 || !selectedOption2}
+                >
+                  {Array.isArray(options3)
+                    ? options3.map(option => (
+                      <Option key={option} value={option}>
+                        {option}
+                      </Option>
+                    ))
+                    : null}
+                </Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" htmlType="submit">
+                  Add SKU
+                </Button>
+              </Form.Item>
+            </Form>
+            {successMessage && <p>{successMessage}</p>}
+            <Table columns={columns2} dataSource={tableData2} loading={loading} />
+          </TabPane>
+          <TabPane tab="Rename/Update QSKU" key="5">
+            <Form onFinish={handleRenameUpdatesku}>
+              <Form.Item
+                label="QSKU ID "
+                name="SKUMcnUpdate"
+                rules={[{ required: true, message: 'Please enter updated QSKU ID' }]}
+              >
+                <Select
+                  showSearch
+                  style={{ width: 250, marginLeft: '20px' }}
+                  placeholder="Select QSKU ID"
+                  optionFilterProp="children"
+                  onChange={handlegetqskuidChange}
+                  value={qskuid}
+                >
+                  {Array.isArray(SkuIdOptions)
+                    ? SkuIdOptions.map(option => (
+                      <Option key={option} value={option}>
+                        {option}
+                      </Option>
+                    ))
+                    : null}
+                </Select>
+              </Form.Item>
+              <Form.Item
+                label="QSKU Featuring"
+                name="SKUFeaturingUpdate"
+                rules={[{ required: true, message: 'Please enter updated QSKU Featuring' }]}
+              >
+                <Select
+                  showSearch
+                  mode="multiple"
+                  style={{ width: 500 }}
+                  placeholder="Select Qbin name"
+                  optionFilterProp="children"
+                  onChange={handleSelect3Change}
+                  value={renderSelections()}
+                  loading={loadingqbinname}
+                  disabled={!selectedOption1 || !selectedOption2}
+                >
+                  {Array.isArray(options3)
+                    ? options3.map(option => (
+                      <Option key={option} value={option}>
+                        {option}
+                      </Option>
+                    ))
+                    : null}
+                </Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" danger htmlType="submit">
+                  Rename/Update SKU
+                </Button>
+              </Form.Item>
+            </Form>
+            <Table columns={columns2} dataSource={tableData2} loading={loading} />
+          </TabPane>
+          <TabPane tab="Remove QSKU" key="6">
+            <Form onFinish={handleremovesku}>
+              <Form.Item
+                label="QSKU Featuring"
+                name="SKU_Featuring"
+                rules={[{ required: true, message: 'Please enter QSKU_Featuring to remove' }]}
+              >
+                <Select
+                  showSearch
+                  mode="multiple"
+                  style={{ width: 500 }}
+                  placeholder="Select Qsku featuring"
+                  optionFilterProp="children"
+                  onChange={handleremoveskuChange}
+                  value={renderskuSelections()}
+                  // loading={loadingqbinname}
+                  disabled={!selectedOption1 || !selectedOption2}
+                >
+                  {Array.isArray(qskuFeaturing)
+                    ? qskuFeaturing.map(option => (
+                      <Option key={option} value={option}>
+                        {option}
+                      </Option>
+                    ))
+                    : null}
+                </Select>
+              </Form.Item>
+              <Form.Item>
+                <Button type="primary" danger htmlType="submit">
+                  Remove SKU
+                </Button>
+              </Form.Item>
+            </Form>
+            <Table columns={columns2} dataSource={tableData2} loading={loading} />
+          </TabPane>
+        </Tabs>
       </Modal>
-      <Table columns={columns} dataSource={tableData} scroll={{ x: 'max-content' }} />
-    </div>
+    </>
   );
 };
-
-export default Projectpoc;
+export default SkuDefinition;
