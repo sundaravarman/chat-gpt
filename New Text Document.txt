@@ -189,6 +189,6 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
       </Modal>
     </div>
   );
-};
+}; 
 
 export default Approvalsystem;
