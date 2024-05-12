@@ -4,7 +4,42 @@ const sendToBackend = async (
   setStatus: React.Dispatch<React.SetStateAction<boolean>>
 ): Promise<string> => {
   const backendUrl = 'https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/check_users';
-  try {
+  try {const sendToBackend = (
+  value: string,
+  person: string,
+  setStatus: React.Dispatch<React.SetStateAction<boolean>>
+) => {
+  const backendUrl = 'https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/check_users';
+  axios
+    .post(backendUrl, { data: value, person })
+    .then(response => {
+      if (response.data.response === 'yes') {
+        message.success(`${person} is available in the group!`);
+        setStatus(true);
+      } else {
+        let errorMessage = '';
+        switch (person) {
+          case 'DV/DFT Lead':
+            errorMessage = `${person} is not part of DV/DFT group`;
+            break;
+          case 'TE Lead':
+            errorMessage = `${person} is not part of TE group`;
+            break;
+          // Add more cases for other types of persons if needed
+          default:
+            errorMessage = `${person} is not part of the required group`;
+            break;
+        }
+        message.error(errorMessage);
+        setStatus(false);
+      }
+    })
+    .catch(() => {
+      message.error('Error communicating with the server');
+      setStatus(false);
+    });
+};
+
     const response = await axios.post(backendUrl, { data: value, person });
     if (response.data.response === 'yes') {
       setStatus(true);
