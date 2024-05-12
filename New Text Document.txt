@@ -1,153 +1,194 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, Button, Tabs, Input, Form, Table, message, Select } from 'antd';
+import React, { useState } from 'react';
+import { Button, Modal, Form, Input, DatePicker, message } from 'antd';
+import 'antd/dist/antd.css';
 import axios from 'axios';
+// Import Moment.js correctly
+import moment from 'moment';
 
-const { TabPane } = Tabs;
-const { Option } = Select;
+interface Approvprops {
+  selectedOption1: string | null;
+  selectedOption2: string | null;
+  selectedOption3: string[];
+}
 
-const SkuDefinition = ({ selectedOption1, selectedOption2, selectedOption4 }) => {
-  const [modalVisible, setModalVisible] = useState(false);
+const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption2, selectedOption3 }) => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [person1Value, setPerson1Value] = useState('');
+  const [person2Value, setPerson2Value] = useState('');
+  const [ccpersonvalue, setccpersonvalue] = useState('');
+  const [person1Status, setPerson1Status] = useState(false);
+  const [person2Status, setPerson2Status] = useState(false);
+  const [dateStatus, setDateStatus] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<moment.Moment | null>(null);
 
-  // State variables for form data
-  const [formData, setFormData] = useState({
-    qbinMcn: '',
-    qbinShortName: '',
-    qbinFeaturing: '',
-  });
-
-  // State variable for table data
-  const [tableData, setTableData] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  // Function to handle form submission
-  const handleAddQBIN = async () => {
-    try {
-      const apiUrl = 'https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/add_qbin_data';
-      
-      // Merge the form data with selectedOption1 and selectedOption2
-      const requestData = {
-        ...formData,
-        selectedOption1,
-        selectedOption2,
-      };
-
-      // Send the data to the backend using Axios
-      const response = await axios.post(apiUrl, requestData);
-
-      // Handle the response
-      if (response.status === 200) {
-        // Display success message from the response data
-        message.success(response.data.message);
-
-        // Clear the form data
-        setFormData({
-          qbinMcn: '',
-          qbinShortName: '',
-          qbinFeaturing: '',
-        });
-
-        // Fetch updated table data
-        fetchTableData();
-      }
-    } catch (error) {
-      // Handle errors, e.g., show error message, log the error, etc.
-      console.error('Error sending data to backend:', error);
+  const showModal = () => {
+    if (selectedOption1 && selectedOption2 && selectedOption3.length > 0) {
+      setIsModalVisible(true);
+    } else {
+      message.error('Please select Project, Revision, Block before making an EXTENSION');
     }
   };
 
-  // Function to fetch table data
-  const fetchTableData = async () => {
-    setLoading(true);
-    try {
-      // Replace with your backend API endpoint for fetching table data
-      const apiUrl = `https://qultivateskuedit.sdprd.oks.drekar.qualcomm.com/get_qbin_data?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`;
-
-      // Send a GET request to the backend
-      const response = await axios.get(apiUrl);
-
-      // Update the table data in the state
-      setTableData(response.data);
-    } catch (error) {
-      console.error('Error fetching table data:', error);
-    }
-    setLoading(false);
+  const handleOk = () => {
+    setIsModalVisible(false);
+    setPerson1Value('');
+    setPerson2Value('');
+    setccpersonvalue('');
+    setPerson1Status(false);
+    setPerson2Status(false);
+    setDateStatus(false);
   };
 
-  // Function to handle form input change
-  const handleInputChange = (fieldName, value) => {
-    setFormData(prevData => ({
-      ...prevData,
-      [fieldName]: value,
-    }));
+  const handleCancel = () => {
+    setIsModalVisible(false);
   };
 
-  // Function to check if all form fields are filled
-  const isFormFilled = () => {
-    const { qbinMcn, qbinShortName, qbinFeaturing } = formData;
-    return qbinMcn.trim() !== '' && qbinShortName.trim() !== '' && qbinFeaturing.trim() !== '';
+  const disabledDate = (current: moment.Moment | undefined) => current && current < moment().startOf('day');
+
+  const sendToBackend = (value: string, person: string, setStatus: React.Dispatch<React.SetStateAction<boolean>>) => {
+    const backendUrl = 'https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/check_users';
+    axios
+      .post(backendUrl, { data: value, person })
+      .then(response => {
+        if (response.data.response === 'yes') {
+          message.success(`${person} is available in the group!`);
+          setStatus(true);
+        } else {
+          message.error(
+            `${person} should be part of any of these three groups: sd_TELeads, tce_TELeads, comet_TELeads`,
+          );
+          setStatus(false);
+        }
+      })
+      .catch(() => {
+        message.error('Error communicating with the server');
+        setStatus(false);
+      });
+  };
+
+  const handlePerson1Submit = () => {
+    sendToBackend(person1Value, 'DV/DFT Lead', setPerson1Status);
+  };
+
+  const handlePerson2Submit = () => {
+    sendToBackend(person2Value, 'TE Lead', setPerson2Status);
+  };
+
+  const handleDateBackend = (): Promise<AxiosResponse<any>> => {
+    const backendUrl = 'https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/extension_date_validator';
+    const formattedDate = selectedDate?.format('YYYY-MM-DD'); // Adjust the date format based on your backend requirements
+
+    return axios.post(backendUrl, { date: formattedDate });
+  };
+
+  const handleDateSubmit = () => {
+    handleDateBackend(selectedDate)
+      .then(response => {
+        if (response.data.response === 'yes') {
+          message.success('Date is valid!');
+          setDateStatus(true);
+        } else {
+          message.error('Please select the date less then 7 days from today !');
+          setDateStatus(false);
+        }
+      })
+      .catch(() => {
+        message.error('Error communicating with the server');
+        setDateStatus(false);
+      });
+  };
+  const onFinishFailed = () => {
+    // console.log('Failed:', errorInfo);
+  };
+
+  const onFinish = (values: any) => {
+    const finalBackendUrl = `https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/send_email?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3}`;
+
+    // Include the selectedDate in the values object
+    values.selectedDate = selectedDate?.format('YYYY-MM-DD');
+
+    axios
+      .post(finalBackendUrl, values)
+      .then(() => {
+        message.success('Form submitted successfully!');
+        handleOk();
+      })
+      .catch(() => {});
   };
 
   return (
-    <>
-      <Button type="primary" onClick={() => setModalVisible(true)}>
-        Qultivate Definition
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <Button type="primary" onClick={showModal}>
+        EXTENSION
       </Button>
-      <Modal
-        title={`SKU Definition for ${selectedOption1} - ${selectedOption2}`}
-        visible={modalVisible}
-        onCancel={() => setModalVisible(false)}
-        footer={null}
-        width={800}
-      >
-        <Tabs defaultActiveKey="1">
-          <TabPane tab="Add QBIN" key="1">
-            <Form onFinish={handleAddQBIN}>
-              <Form.Item
-                label="QBIN ID"
-                name="qbinMcn"
-                rules={[{ required: true, message: 'Please enter QBIN ID' }]}
-              >
-                <Input
-                  placeholder="ID in TSS,e.g. QBIN_1"
-                  value={formData.qbinMcn}
-                  onChange={e => handleInputChange('qbinMcn', e.target.value)}
-                />
-              </Form.Item>
-              <Form.Item
-                label="QBIN Description"
-                name="qbinShortName"
-                rules={[{ required: true, message: 'Please enter QBIN Description' }]}
-              >
-                <Input
-                  placeholder="any text description, e.g. No gold plus"
-                  value={formData.qbinShortName}
-                  onChange={e => handleInputChange('qbinShortName', e.target.value)}
-                />
-              </Form.Item>
-              <Form.Item
-                label="QBIN NAME"
-                name="qbinFeaturing"
-                rules={[{ required: true, message: 'Please enter QBIN Featuring' }]}
-              >
-                <Input
-                  placeholder="Name must match ATE TP,e.g. NO_CPUCORE0"
-                  value={formData.qbinFeaturing}
-                  onChange={e => handleInputChange('qbinFeaturing', e.target.value)}
-                />
-              </Form.Item>
-              <Form.Item>
-                <Button type="primary" htmlType="submit" disabled={!isFormFilled()}>
-                  Add QBIN
+      <Modal title="APPROVAL" visible={isModalVisible} onOk={onFinish} onCancel={handleCancel}>
+        <Form
+          name="myForm"
+          initialValues={{ remember: false }}
+          onFinish={onFinish}
+          onFinishFailed={onFinishFailed}
+          onValuesChange={(changedValues, allValues) => {
+            // Update the selectedDate when the extensionDate changes
+            if ('extensionDate' in changedValues) {
+              setSelectedDate(allValues.extensionDate);
+            }
+          }}
+        >
+          <Form.Item
+            label="Extension Date"
+            name="extensionDate"
+            rules={[{ required: false, message: 'Please select Extension Date!' }]}
+          >
+            <DatePicker style={{ width: '80%' }} disabledDate={disabledDate} onChange={date => setSelectedDate(date)} />
+            <Button type="primary" onClick={handleDateSubmit} style={{ marginLeft: '10px' }}>
+              Check
+            </Button>
+          </Form.Item>
+          <Form.Item
+            label="DV/DFT Lead"
+            name="person1"
+            rules={[{ required: true, message: 'Please enter DV/DFT Lead' }]}
+          >
+            <Input
+              value={person1Value}
+              onChange={e => setPerson1Value(e.target.value)}
+              addonAfter={
+                <Button type="primary" onClick={handlePerson1Submit}>
+                  Check
                 </Button>
-              </Form.Item>
-            </Form>
-            <Table columns={columns} dataSource={tableData} loading={loading} />
-          </TabPane>
-          {/* Other TabPanels */}
-        </Tabs>
+              }
+            />
+          </Form.Item>
+
+          <Form.Item label="TE Lead" name="person2" rules={[{ required: true, message: 'Please enter TE Lead' }]}>
+            <Input
+              value={person2Value}
+              onChange={e => setPerson2Value(e.target.value)}
+              addonAfter={
+                <Button type="primary" onClick={handlePerson2Submit}>
+                  Check
+                </Button>
+              }
+            />
+          </Form.Item>
+          <Form.Item label="Mail CC " name="ccperson" rules={[{ required: false, message: 'Please enter for cc' }]}>
+            <Input value={ccpersonvalue} onChange={e => setccpersonvalue(e.target.value)} />
+          </Form.Item>
+
+          <Form.Item>
+            <Button
+              type="primary"
+              onClick={onFinish}
+              htmlType="submit"
+              disabled={!person1Status || !person2Status || !dateStatus}
+            >
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
       </Modal>
-    </>
+    </div>
   );
 };
 
-export default SkuDefinition;
+export default Approvalsystem;
