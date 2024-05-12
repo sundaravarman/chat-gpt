@@ -1,10 +1,4 @@
-const sendToBackend = async (
-  value: string,
-  person: string,
-  setStatus: React.Dispatch<React.SetStateAction<boolean>>
-): Promise<string> => {
-  const backendUrl = 'https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/check_users';
-  try {const sendToBackend = (
+const sendToBackend = (
   value: string,
   person: string,
   setStatus: React.Dispatch<React.SetStateAction<boolean>>
@@ -38,39 +32,4 @@ const sendToBackend = async (
       message.error('Error communicating with the server');
       setStatus(false);
     });
-};
-
-    const response = await axios.post(backendUrl, { data: value, person });
-    if (response.data.response === 'yes') {
-      setStatus(true);
-      return `${person} is available in the group!`;
-    } else if (response.data.response === 'no') {
-      setStatus(false);
-      return `${person} should be part of any of these three groups: sd_TELeads, tce_TELeads, comet_TELeads`;
-    } else {
-      setStatus(false);
-      return 'Unexpected response from the server';
-    }
-  } catch (error) {
-    setStatus(false);
-    return 'Error communicating with the server';
-  }
-};
-
-const handlePerson1Submit = async () => {
-  const message = await sendToBackend(person1Value, 'DV/DFT Lead', setPerson1Status);
-  if (!person1Status) {
-    message.error(message);
-  } else {
-    message.success(message);
-  }
-};
-
-const handlePerson2Submit = async () => {
-  const message = await sendToBackend(person2Value, 'TE Lead', setPerson2Status);
-  if (!person2Status) {
-    message.error(message);
-  } else {
-    message.success(message);
-  }
 };
