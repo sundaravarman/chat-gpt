@@ -16,15 +16,15 @@ const TopHeaderColor = styled.div`
 const { Option } = Select;
 
 const MySearchableDropdown: React.FC = () => {
-  const [selectedOption1, setSelectedOption1] = useState<string | null>(null);
+  const [selectedOption1, setSelectedOption1] = useState<string | null>(localStorage.getItem('selectedOption1') || null);
 
-  const [selectedOption2, setSelectedOption2] = useState<string | null>(null);
+  const [selectedOption2, setSelectedOption2] = useState<string | null>(localStorage.getItem('selectedOption2') || null);
 
-  const [selectedOption3, setSelectedOption3] = useState<string[]>([]);
+  const [selectedOption3, setSelectedOption3] = useState<string[]>(JSON.parse(localStorage.getItem('selectedOption3') || '[]'));
 
-  const [selectedOption4, setSelectedOption4] = useState<string[]>(['ATE']);
+  const [selectedOption4, setSelectedOption4] = useState<string[]>(JSON.parse(localStorage.getItem('selectedOption4') || '["ATE"]'));
 
-  const [selectedOption5, setSelectedOption5] = useState<string[]>(['PROD']);
+  const [selectedOption5, setSelectedOption5] = useState<string[]>(JSON.parse(localStorage.getItem('selectedOption5') || '["PROD"]'));
 
   const [options1, setOptions1] = useState<string[]>([]);
 
@@ -138,6 +138,8 @@ const MySearchableDropdown: React.FC = () => {
     setSelectedOption3([]);
 
     setSelectAllOption(false);
+
+    localStorage.setItem('selectedOption1', value);
   };
 
   const handleSelect2Change = value => {
@@ -150,6 +152,8 @@ const MySearchableDropdown: React.FC = () => {
     setSelectedOption3([]);
 
     setSelectAllOption(false);
+
+    localStorage.setItem('selectedOption2', value);
   };
 
   const handleSelect3Change = value => {
@@ -164,6 +168,8 @@ const MySearchableDropdown: React.FC = () => {
 
       setSelectAllOption(false);
     }
+
+    localStorage.setItem('selectedOption3', JSON.stringify(value));
   };
 
   // Custom function to display selected values
@@ -178,10 +184,12 @@ const MySearchableDropdown: React.FC = () => {
   const handleSelect4Change = (value: string[]) => {
     // Update selectedOption4 with the selected values
     setSelectedOption4(value);
+    localStorage.setItem('selectedOption4', JSON.stringify(value));
   };
   const handleSelect5Change = value => {
     setSelectedOption5(value);
     setSelectAllOption(false);
+    localStorage.setItem('selectedOption5', JSON.stringify(value));
   };
 
   return (
