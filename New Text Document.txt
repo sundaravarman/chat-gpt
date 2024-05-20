@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Select, Col, Tabs } from 'antd';
 import axios from 'axios';
-import MyTable from './MyTable';
+
 import styled from 'styled-components';
 import colors from 'utils/colors';
-import Qultivatesummery from './qultivatesummery';
+import phasingSummery from './components/OverallSummary/phasing_summery';
 const { TabPane } = Tabs;
 
 const TopHeaderColor = styled.div`
@@ -16,15 +16,25 @@ const TopHeaderColor = styled.div`
 const { Option } = Select;
 
 const MySearchableDropdown: React.FC = () => {
-  const [selectedOption1, setSelectedOption1] = useState<string | null>(localStorage.getItem('selectedOption1') || null);
+  const [selectedOption1, setSelectedOption1] = useState<string | null>(
+    localStorage.getItem('selectedOption1') || null,
+  );
 
-  const [selectedOption2, setSelectedOption2] = useState<string | null>(localStorage.getItem('selectedOption2') || null);
+  const [selectedOption2, setSelectedOption2] = useState<string | null>(
+    localStorage.getItem('selectedOption2') || null,
+  );
 
-  const [selectedOption3, setSelectedOption3] = useState<string[]>(JSON.parse(localStorage.getItem('selectedOption3') || '[]'));
+  const [selectedOption3, setSelectedOption3] = useState<string[]>(
+    JSON.parse(localStorage.getItem('selectedOption3') || '[All]'),
+  );
 
-  const [selectedOption4, setSelectedOption4] = useState<string[]>(JSON.parse(localStorage.getItem('selectedOption4') || '["ATE"]'));
+  const [selectedOption4, setSelectedOption4] = useState<string[]>(
+    JSON.parse(localStorage.getItem('selectedOption4') || '["ATE"]'),
+  );
 
-  const [selectedOption5, setSelectedOption5] = useState<string[]>(JSON.parse(localStorage.getItem('selectedOption5') || '["PROD"]'));
+  const [selectedOption5, setSelectedOption5] = useState<string[]>(
+    JSON.parse(localStorage.getItem('selectedOption5') || '["PROD"]'),
+  );
 
   const [options1, setOptions1] = useState<string[]>([]);
 
@@ -313,24 +323,15 @@ const MySearchableDropdown: React.FC = () => {
           </div>
         </div>
       </TopHeaderColor>
-      <div style={{ fontSize: '30px', marginTop: '10px', marginLeft: '10px' }}>Qultivate Definition</div>
-
+      <div style={{ fontSize: '30px', marginTop: '10px', marginLeft: '10px' }}>Phasing page</div>
       <Tabs defaultActiveKey="1" style={{ marginLeft: '10px' }}>
-        <TabPane tab=" Qultivate_Summary" key="1">
-          <Qultivatesummery
-            selectedOption1={selectedOption1}
-            selectedOption2={selectedOption2}
-            selectedOption3={selectedOption3}
-          />
+        <TabPane tab=" Phasing_Summary" key="1">
+          
         </TabPane>
-        <TabPane tab="Qultivate_phasing" key="2">
-          <MyTable
-            selectedOption1={selectedOption1}
-            selectedOption2={selectedOption2}
-            selectedOption3={selectedOption3}
-            selectedOption4={selectedOption4}
-          />
-        </TabPane>
+        <TabPane tab="TDF Summary" key="2"></TabPane>
+        <TabPane tab="ATPG Summary" key="3"></TabPane>
+        <TabPane tab="MBIST Summary" key="4"></TabPane>
+        <TabPane tab="Phasing Status" key="5"></TabPane>
       </Tabs>
     </>
   );
