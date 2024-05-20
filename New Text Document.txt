@@ -1,340 +1,68 @@
 import React, { useEffect, useState } from 'react';
-import { Select, Col, Tabs } from 'antd';
+import { Table, Spin } from 'antd';
 import axios from 'axios';
 
-import styled from 'styled-components';
-import colors from 'utils/colors';
-import phasingSummery from './components/OverallSummary/phasing_summery';
-const { TabPane } = Tabs;
+interface PhasingSummaryProps {
+  selectedOption1: string | null;
+  selectedOption2: string | null;
+  selectedOption3: string[];
+  selectedOption4: string[];
+  selectedOption5: string[];
+}
 
-const TopHeaderColor = styled.div`
-  padding-top: 24px;
-  padding-bottom: 24px;
-  background-color: ${colors.lightgray};
-`;
-
-const { Option } = Select;
-
-const MySearchableDropdown: React.FC = () => {
-  const [selectedOption1, setSelectedOption1] = useState<string | null>(
-    localStorage.getItem('selectedOption1') || null,
-  );
-
-  const [selectedOption2, setSelectedOption2] = useState<string | null>(
-    localStorage.getItem('selectedOption2') || null,
-  );
-
-  const [selectedOption3, setSelectedOption3] = useState<string[]>(
-    JSON.parse(localStorage.getItem('selectedOption3') || '[All]'),
-  );
-
-  const [selectedOption4, setSelectedOption4] = useState<string[]>(
-    JSON.parse(localStorage.getItem('selectedOption4') || '["ATE"]'),
-  );
-
-  const [selectedOption5, setSelectedOption5] = useState<string[]>(
-    JSON.parse(localStorage.getItem('selectedOption5') || '["PROD"]'),
-  );
-
-  const [options1, setOptions1] = useState<string[]>([]);
-
-  const [options2, setOptions2] = useState<string[]>([]);
-
-  const [options3, setOptions3] = useState<string[]>([]);
-
-  const [options4, setOptions4] = useState<string[]>([]);
-
-  // const [loading1, setLoading1] = useState(false);
-
-  const [loading2, setLoading2] = useState(false);
-
-  const [loading3, setLoading3] = useState(false);
-
-  const [loading4, setLoading4] = useState(false);
-
-  const [loading5] = useState(false);
-
-  const [selectAllOption, setSelectAllOption] = useState(false);
-
-  // const Container = styled.div;
+const PhasingSummary: React.FC<PhasingSummaryProps> = ({
+  selectedOption1,
+  selectedOption2,
+  selectedOption3,
+  selectedOption4,
+  selectedOption5,
+}) => {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    axios
-      .get('https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options1') // Replace with your actual API endpoint
-
-      .then(response => {
-        setOptions1(response.data);
-
-        // setLoading1(false);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (selectedOption1) {
-      setLoading2(true);
-
+    if (selectedOption1 && selectedOption2 && selectedOption3.length && selectedOption4.length && selectedOption5.length) {
+      setLoading(true);
       axios
-        .get(`https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options2?selectedOption1=${selectedOption1}`) // Replace with your actual API endpoint
+        .get('https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-phasing-summary', {
+          params: {
+            selectedOption1,
+            selectedOption2,
+            selectedOption3: selectedOption3.join(','),
+            selectedOption4: selectedOption4.join(','),
+            selectedOption5: selectedOption5.join(','),
+          },
+        })
         .then(response => {
-          setOptions2(response.data);
-
-          setLoading2(false);
-
-          // Clear third dropdown when the first dropdown changes
-
-          setOptions3([]);
-
-          setSelectedOption3([]);
-
-          setSelectAllOption(false);
+          setData(response.data);
+          setLoading(false);
+        })
+        .catch(error => {
+          console.error('Error fetching data:', error);
+          setLoading(false);
         });
     }
-  }, [selectedOption1]);
+  }, [selectedOption1, selectedOption2, selectedOption3, selectedOption4, selectedOption5]);
 
-  useEffect(() => {
-    if (selectedOption1 && selectedOption2) {
-      setLoading3(true);
+  const columns = [
+    {
+      title: 'Column1',
+      dataIndex: 'column1',
+      key: 'column1',
+    },
+    {
+      title: 'Column2',
+      dataIndex: 'column2',
+      key: 'column2',
+    },
+    // Add more columns as needed
+  ];
 
-      axios
-        .get(
-          `https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options3?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`,
-        )
+  if (loading) {
+    return <Spin size="large" />;
+  }
 
-        .then(response => {
-          const options = response.data;
-
-          options.unshift('All');
-
-          setOptions3(options);
-
-          setLoading3(false);
-        });
-    }
-  }, [selectedOption1, selectedOption2]);
-  useEffect(() => {
-    if (selectedOption1 && selectedOption2 && selectedOption3) {
-      setLoading4(true);
-
-      axios
-        .get(
-          `https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options-for-dropdown-4?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3.join(
-            ',',
-          )}`,
-        ) // Replace with your actual API endpoint for dropdown 4 options
-
-        .then(response => {
-          const options = response.data;
-
-          options.unshift();
-
-          setOptions4(options);
-
-          setLoading4(false);
-        });
-    }
-  }, [selectedOption1, selectedOption2, selectedOption3]);
-
-  const handleSelect1Change = value => {
-    setSelectedOption1(value);
-
-    // Clear second and third dropdowns when the first dropdown changes
-
-    setOptions2([]);
-
-    setSelectedOption2(null);
-
-    setOptions3([]);
-
-    setSelectedOption3([]);
-
-    setSelectAllOption(false);
-
-    localStorage.setItem('selectedOption1', value);
-  };
-
-  const handleSelect2Change = value => {
-    setSelectedOption2(value);
-
-    // Clear third dropdown when the second dropdown changes
-
-    setOptions3([]);
-
-    setSelectedOption3([]);
-
-    setSelectAllOption(false);
-
-    localStorage.setItem('selectedOption2', value);
-  };
-
-  const handleSelect3Change = value => {
-    if (value.includes('All')) {
-      setSelectedOption3(options3.filter(option => option !== 'All'));
-
-      setSelectAllOption(true);
-    } else {
-      // Unselect "All" option
-
-      setSelectedOption3(value.filter(val => val !== 'All'));
-
-      setSelectAllOption(false);
-    }
-
-    localStorage.setItem('selectedOption3', JSON.stringify(value));
-  };
-
-  // Custom function to display selected values
-
-  const renderSelections = () => {
-    if (selectAllOption) {
-      return ['All'];
-    }
-
-    return selectedOption3;
-  };
-  const handleSelect4Change = (value: string[]) => {
-    // Update selectedOption4 with the selected values
-    setSelectedOption4(value);
-    localStorage.setItem('selectedOption4', JSON.stringify(value));
-  };
-  const handleSelect5Change = value => {
-    setSelectedOption5(value);
-    setSelectAllOption(false);
-    localStorage.setItem('selectedOption5', JSON.stringify(value));
-  };
-
-  return (
-    <>
-      <TopHeaderColor>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div>
-            <label htmlFor="selectedOption1" style={{ fontWeight: 'bold', marginLeft: '20px' }}>
-              Project :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              style={{ width: 250, marginLeft: '20px' }}
-              placeholder="Select Project"
-              optionFilterProp="children"
-              onChange={handleSelect1Change}
-              value={selectedOption1}
-            >
-              {Array.isArray(options1)
-                ? options1.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))
-                : null}
-            </Select>
-          </div>
-
-          <div>
-            <label htmlFor="selectedOption2" style={{ fontWeight: 'bold' }}>
-              Revision :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              style={{ width: 250 }}
-              placeholder="Select Revision"
-              optionFilterProp="children"
-              onChange={handleSelect2Change}
-              value={selectedOption2}
-              loading={loading2}
-              disabled={!selectedOption1}
-            >
-              {Array.isArray(options2)
-                ? options2.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))
-                : null}
-            </Select>
-          </div>
-
-          <div>
-            <label htmlFor="selectedOption3" style={{ fontWeight: 'bold' }}>
-              Block :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              mode="multiple"
-              style={{ width: 250 }}
-              placeholder="Select Block"
-              optionFilterProp="children"
-              onChange={handleSelect3Change}
-              value={renderSelections()}
-              loading={loading3}
-              disabled={!selectedOption1 || !selectedOption2}
-            >
-              {Array.isArray(options3)
-                ? options3.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))
-                : null}
-            </Select>
-          </div>
-          <div>
-            <label htmlFor="selectedOption4" style={{ fontWeight: 'bold' }}>
-              platform :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              mode="multiple"
-              style={{ width: 250 }}
-              placeholder="Select Fourth Dropdown"
-              optionFilterProp="children"
-              onChange={handleSelect4Change}
-              value={selectedOption4}
-              loading={loading4}
-              disabled={!selectedOption1 || !selectedOption2 || !selectedOption3}
-            >
-              {Array.isArray(options4)
-                ? options4.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))
-                : null}
-            </Select>
-          </div>
-          <div>
-            <label htmlFor="selectedOption4" style={{ fontWeight: 'bold' }}>
-              Pattern Type :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              mode="multiple"
-              style={{ width: 250 }}
-              placeholder="Select five Dropdown"
-              optionFilterProp="children"
-              onChange={handleSelect5Change}
-              value={selectedOption5}
-              loading={loading5}
-              disabled={!selectedOption1 || !selectedOption2 || !selectedOption3 || !selectedOption4}
-            ></Select>
-          </div>
-        </div>
-      </TopHeaderColor>
-      <div style={{ fontSize: '30px', marginTop: '10px', marginLeft: '10px' }}>Phasing page</div>
-      <Tabs defaultActiveKey="1" style={{ marginLeft: '10px' }}>
-        <TabPane tab=" Phasing_Summary" key="1">
-          
-        </TabPane>
-        <TabPane tab="TDF Summary" key="2"></TabPane>
-        <TabPane tab="ATPG Summary" key="3"></TabPane>
-        <TabPane tab="MBIST Summary" key="4"></TabPane>
-        <TabPane tab="Phasing Status" key="5"></TabPane>
-      </Tabs>
-    </>
-  );
+  return <Table columns={columns} dataSource={data} rowKey="id" />;
 };
 
-export default MySearchableDropdown;
+export default PhasingSummary;
