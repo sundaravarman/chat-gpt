@@ -37,37 +37,25 @@ const MySearchableDropdown: React.FC = () => {
   );
 
   const [options1, setOptions1] = useState<string[]>([]);
-
   const [options2, setOptions2] = useState<string[]>([]);
-
   const [options3, setOptions3] = useState<string[]>([]);
-
   const [options4, setOptions4] = useState<string[]>([]);
-
   const [options5, setOptions5] = useState<string[]>([]);
 
-  // const [loading1, setLoading1] = useState(false);
-
   const [loading2, setLoading2] = useState(false);
-
   const [loading3, setLoading3] = useState(false);
-
   const [loading4, setLoading4] = useState(false);
-
   const [loading5] = useState(false);
-
   const [selectAllOption, setSelectAllOption] = useState(false);
 
-  // const Container = styled.div;
+  // New state for the additional label
+  const [extensionRequest, setExtensionRequest] = useState<string>('');
 
   useEffect(() => {
     axios
       .get('https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options1') // Replace with your actual API endpoint
-
       .then(response => {
         setOptions1(response.data);
-
-        // setLoading1(false);
       });
   }, []);
 
@@ -79,15 +67,11 @@ const MySearchableDropdown: React.FC = () => {
         .get(`https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options2?selectedOption1=${selectedOption1}`) // Replace with your actual API endpoint
         .then(response => {
           setOptions2(response.data);
-
           setLoading2(false);
 
           // Clear third dropdown when the first dropdown changes
-
           setOptions3([]);
-
           setSelectedOption3([]);
-
           setSelectAllOption(false);
         });
     }
@@ -101,18 +85,15 @@ const MySearchableDropdown: React.FC = () => {
         .get(
           `https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options3?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`,
         )
-
         .then(response => {
           const options = response.data;
-
           options.unshift('All');
-
           setOptions3(options);
-
           setLoading3(false);
         });
     }
   }, [selectedOption1, selectedOption2]);
+
   useEffect(() => {
     if (selectedOption1 && selectedOption2 && selectedOption3) {
       setLoading4(true);
@@ -123,14 +104,10 @@ const MySearchableDropdown: React.FC = () => {
             ',',
           )}`,
         ) // Replace with your actual API endpoint for dropdown 4 options
-
         .then(response => {
           const options = response.data;
-
           options.unshift();
-
           setOptions4(options);
-
           setLoading4(false);
         });
     }
@@ -139,11 +116,16 @@ const MySearchableDropdown: React.FC = () => {
   useEffect(() => {
     axios
       .get('https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-Qultivate_options-for-dropdown-5')
-
       .then(response => {
         setOptions5(response.data);
+      });
+  }, []);
 
-        // setLoading1(false);
+  useEffect(() => {
+    axios
+      .get('https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-extension-request') // Replace with your actual API endpoint
+      .then(response => {
+        setExtensionRequest(response.data);
       });
   }, []);
 
@@ -151,17 +133,11 @@ const MySearchableDropdown: React.FC = () => {
     setSelectedOption1(value);
 
     // Clear second and third dropdowns when the first dropdown changes
-
     setOptions2([]);
-
     setSelectedOption2(null);
-
     setOptions3([]);
-
     setSelectedOption3([]);
-
     setSelectAllOption(false);
-
     localStorage.setItem('selectedOption1', value);
   };
 
@@ -169,48 +145,38 @@ const MySearchableDropdown: React.FC = () => {
     setSelectedOption2(value);
 
     // Clear third dropdown when the second dropdown changes
-
     setOptions3([]);
-
     setSelectedOption3([]);
-
     setSelectAllOption(false);
-
     localStorage.setItem('selectedOption2', value);
   };
 
   const handleSelect3Change = value => {
     if (value.includes('All')) {
       setSelectedOption3(options3.filter(option => option !== 'All'));
-
       setSelectAllOption(true);
     } else {
       // Unselect "All" option
-
       setSelectedOption3(value.filter(val => val !== 'All'));
-
       setSelectAllOption(false);
     }
-
     localStorage.setItem('selectedOption3', JSON.stringify(value));
   };
 
   // Custom function to display selected values
-
   const renderSelections = () => {
     if (selectAllOption) {
       return ['All'];
     }
-
     return selectedOption3;
   };
+
   const handleSelect4Change = (value: string[]) => {
-    // Update selectedOption4 with the selected values
     setSelectedOption4(value);
     localStorage.setItem('selectedOption4', JSON.stringify(value));
   };
+
   const handleSelect5Change = (value: string[]) => {
-    // Update selectedOption4 with the selected values
     setSelectedOption5(value);
     localStorage.setItem('selectedOption5', JSON.stringify(value));
   };
@@ -234,10 +200,10 @@ const MySearchableDropdown: React.FC = () => {
             >
               {Array.isArray(options1)
                 ? options1.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))
+                    <Option key={option} value={option}>
+                      {option}
+                    </Option>
+                  ))
                 : null}
             </Select>
           </div>
@@ -259,10 +225,10 @@ const MySearchableDropdown: React.FC = () => {
             >
               {Array.isArray(options2)
                 ? options2.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))
+                    <Option key={option} value={option}>
+                      {option}
+                    </Option>
+                  ))
                 : null}
             </Select>
           </div>
@@ -285,16 +251,17 @@ const MySearchableDropdown: React.FC = () => {
             >
               {Array.isArray(options3)
                 ? options3.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))
+                    <Option key={option} value={option}>
+                      {option}
+                    </Option>
+                  ))
                 : null}
             </Select>
           </div>
+
           <div>
             <label htmlFor="selectedOption4" style={{ fontWeight: 'bold' }}>
-              platform :{' '}
+              Platform :{' '}
             </label>
             <Col span={24}></Col>
             <Select
@@ -310,13 +277,14 @@ const MySearchableDropdown: React.FC = () => {
             >
               {Array.isArray(options4)
                 ? options4.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))
+                    <Option key={option} value={option}>
+                      {option}
+                    </Option>
+                  ))
                 : null}
             </Select>
           </div>
+
           <div>
             <label htmlFor="selectedOption5" style={{ fontWeight: 'bold' }}>
               Pattern Type :{' '}
@@ -326,28 +294,31 @@ const MySearchableDropdown: React.FC = () => {
               showSearch
               mode="multiple"
               style={{ width: 250 }}
-              placeholder="Select pattern type"
+              placeholder="Select Pattern Type"
               optionFilterProp="children"
               onChange={handleSelect5Change}
               value={selectedOption5}
               loading={loading5}
-              // disabled={!selectedOption1 || !selectedOption2 || !selectedOption3 || !selectedOption4}
             >
               {Array.isArray(options5)
                 ? options5.map(option => (
-                  <Option key={option} value={option}>
-                    {option}
-                  </Option>
-                ))
+                    <Option key={option} value={option}>
+                      {option}
+                    </Option>
+                  ))
                 : null}
             </Select>
           </div>
         </div>
       </TopHeaderColor>
+      
       <div style={{ fontSize: '30px', marginTop: '10px', marginLeft: '10px' }}>Qultivate Definition</div>
+      <div style={{ fontSize: '16px', marginTop: '5px', marginLeft: '10px' }}>
+        This block is requested for extension by {extensionRequest}
+      </div>
 
       <Tabs defaultActiveKey="1" style={{ marginLeft: '10px' }}>
-        <TabPane tab=" Qultivate_Summary" key="1">
+        <TabPane tab="Qultivate_Summary" key="1">
           <Qultivatesummery
             selectedOption1={selectedOption1}
             selectedOption2={selectedOption2}
