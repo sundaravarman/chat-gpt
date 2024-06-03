@@ -313,9 +313,11 @@ const MySearchableDropdown: React.FC = () => {
       </TopHeaderColor>
       
       <div style={{ fontSize: '30px', marginTop: '10px', marginLeft: '10px' }}>Qultivate Definition</div>
-      <div style={{ fontSize: '16px', marginTop: '5px', marginLeft: '10px' }}>
-        This block is requested for extension by {extensionRequest}
-      </div>
+      {extensionRequest && (
+        <div style={{ fontSize: '16px', marginTop: '5px', marginLeft: '10px' }}>
+          This block is requested for extension by {extensionRequest}
+        </div>
+      )}
 
       <Tabs defaultActiveKey="1" style={{ marginLeft: '10px' }}>
         <TabPane tab="Qultivate_Summary" key="1">
