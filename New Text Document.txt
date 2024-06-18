@@ -1,344 +1,260 @@
-import React, { useEffect, useState } from 'react';
-import { Select, Col, Tabs } from 'antd';
+import React, { useState, useContext, useEffect } from 'react';
+import { Button, Modal, Form, Input, DatePicker, message } from 'antd';
+import 'antd/dist/antd.css';
 import axios from 'axios';
-import MyTable from './MyTable';
-import styled from 'styled-components';
-import colors from 'utils/colors';
-import Qultivatesummery from './qultivatesummery';
-const { TabPane } = Tabs;
+// Import Moment.js correctly
+import moment from 'moment';
+import { UserContext } from 'utils/helpers';
 
-const TopHeaderColor = styled.div`
-  padding-top: 24px;
-  padding-bottom: 24px;
-  background-color: ${colors.lightgray};
-`;
+export type GlobalHeaderRightProps = {
+  currentUser?: any;
+  menu?: boolean;
+  onSignOut: Function;
+};
 
-const { Option } = Select;
+interface Approvprops {
+  selectedOption1: string | null;
+  selectedOption2: string | null;
+  selectedOption3: string[];
+}
 
-const MySearchableDropdown: React.FC = () => {
-  const [selectedOption1, setSelectedOption1] = useState<string | null>(
-    localStorage.getItem('selectedOption1') || null,
-  );
+const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption2, selectedOption3 }) => {
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [person1Value, setPerson1Value] = useState('');
+  const [person2Value, setPerson2Value] = useState('');
+  const [ccpersonvalue, setccpersonvalue] = useState('');
+  const [person1Status, setPerson1Status] = useState(false);
+  const [person2Status, setPerson2Status] = useState(false);
+  const [dateStatus, setDateStatus] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<moment.Moment | null>(null);
+  const currentUser = useContext(UserContext);
+  const [isButtonEnabled, setButtonEnabled] = useState<boolean>(false);
+  // const [username, setSelectedOption1username] = useState<string | null>(null);
+  const showModal = () => {
+    if (selectedOption1 && selectedOption2 && selectedOption3.length > 0) {
+      setIsModalVisible(true);
+    } else {
+      message.error('Please select Project, Revision, Block before making an EXTENSION');
+    }
+  };
 
-  const [selectedOption2, setSelectedOption2] = useState<string | null>(
-    localStorage.getItem('selectedOption2') || null,
-  );
+  const handleOk = () => {
+    setIsModalVisible(false);
+    setPerson1Value('');
+    setPerson2Value('');
+    setccpersonvalue('');
+    setPerson1Status(false);
+    setPerson2Status(false);
+    setDateStatus(false);
+  };
 
-  const [selectedOption3, setSelectedOption3] = useState<string[]>(
-    JSON.parse(localStorage.getItem('selectedOption3') || '[All]'),
-  );
+  const handleCancel = () => {
+    setIsModalVisible(false);
+  };
 
-  const [selectedOption4, setSelectedOption4] = useState<string[]>(
-    JSON.parse(localStorage.getItem('selectedOption4') || '["ATE"]'),
-  );
+  const disabledDate = (current: moment.Moment | undefined) => current && current < moment().startOf('day');
 
-  const [selectedOption5, setSelectedOption5] = useState<string[]>(
-    JSON.parse(localStorage.getItem('selectedOption5') || '["All"]'),
-  );
-
-  const [options1, setOptions1] = useState<string[]>([]);
-  const [options2, setOptions2] = useState<string[]>([]);
-  const [options3, setOptions3] = useState<string[]>([]);
-  const [options4, setOptions4] = useState<string[]>([]);
-  const [options5, setOptions5] = useState<string[]>([]);
-
-  const [loading2, setLoading2] = useState(false);
-  const [loading3, setLoading3] = useState(false);
-  const [loading4, setLoading4] = useState(false);
-  const [loading5] = useState(false);
-  const [selectAllOption, setSelectAllOption] = useState(false);
-
-  // New state for the additional label
-  const [extensionRequest, setExtensionRequest] = useState<string>('');
-
-  useEffect(() => {
+  const sendToBackend = (value: string, person: string, setStatus: React.Dispatch<React.SetStateAction<boolean>>) => {
+    const backendUrl = 'https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/check_users';
     axios
-      .get('https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options1') // Replace with your actual API endpoint
+      .post(backendUrl, { data: value, person })
       .then(response => {
-        setOptions1(response.data);
+        if (response.data.response === 'yes') {
+          message.success(`${person} is available in the group!`);
+          setStatus(true);
+        } else {
+          let errorMessage = '';
+          switch (person) {
+            case 'DV/DFT Lead':
+              errorMessage = `${person} is not part of bdc.dftsim.leads","bdc.vector.team", "noida.dftsim.leads group`;
+              // console.log(currentUser.name);
+              break;
+            case 'TE Lead':
+              errorMessage = `${person} is not part of sd_TELeads", "tce_TELeads", "comet_TELeads", group`;
+              break;
+            // Add more cases for other types of persons if needed
+            default:
+              errorMessage = `${person} is not part of the required group`;
+              break;
+          }
+          message.error(errorMessage);
+          setStatus(false);
+        }
+      })
+      .catch(() => {
+        message.error('Error communicating with the server');
+        setStatus(false);
       });
-  }, []);
+  };
 
-  useEffect(() => {
-    if (selectedOption1) {
-      setLoading2(true);
+  const handlePerson1Submit = () => {
+    sendToBackend(person1Value, 'DV/DFT Lead', setPerson1Status);
+  };
 
-      axios
-        .get(`https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options2?selectedOption1=${selectedOption1}`) // Replace with your actual API endpoint
-        .then(response => {
-          setOptions2(response.data);
-          setLoading2(false);
+  const handlePerson2Submit = () => {
+    sendToBackend(person2Value, 'TE Lead', setPerson2Status);
+  };
 
-          // Clear third dropdown when the first dropdown changes
-          setOptions3([]);
-          setSelectedOption3([]);
-          setSelectAllOption(false);
-        });
+  const handleDateBackend = (): Promise<AxiosResponse<any>> => {
+    const backendUrl = 'https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/extension_date_validator';
+    const formattedDate = selectedDate?.format('YYYY-MM-DD'); // Adjust the date format based on your backend requirements
+
+    return axios.post(backendUrl, { date: formattedDate });
+  };
+
+  const handleDateSubmit = () => {
+    handleDateBackend(selectedDate)
+      .then(response => {
+        if (response.data.response === 'yes') {
+          message.success('Date is valid!');
+          setDateStatus(true);
+        } else {
+          message.error('Please select the date less then 7 days from today !');
+          setDateStatus(false);
+        }
+      })
+      .catch(() => {
+        message.error('Error communicating with the server');
+        setDateStatus(false);
+      });
+  };
+  const checkextention = async () => {
+    try {
+      // Make a request to your backend using Axios
+      const response = await axios.get(
+        `http://127.0.0.1:5000/Extention_details?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3}`,
+      );
+
+      // Assuming your backend returns a JSON object with a property 'isEnabled'
+      const { data } = response;
+
+      // Check the backend response and update the button state accordingly
+      console.log(data);
+      if (data === 'Date crossed') {
+        message.info('Date crossed');
+      } else {
+        onFinish (values: any);
+      }
+    } catch (error) {
+      // console.error('Error fetching data from backend:', error);
     }
-  }, [selectedOption1]);
+  };
 
-  useEffect(() => {
-    if (selectedOption1 && selectedOption2) {
-      setLoading3(true);
+  const onFinish = (values: any) => {
+    const finalBackendUrl = `https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/send_email?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3}&username=${currentUser.name}`;
 
-      axios
-        .get(
-          `https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options3?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}`,
-        )
-        .then(response => {
-          const options = response.data;
-          options.unshift('All');
-          setOptions3(options);
-          setLoading3(false);
-        });
+    // Include the selectedDate in the values object
+    values.selectedDate = selectedDate?.format('YYYY-MM-DD');
+
+    axios
+      .post(finalBackendUrl, values)
+      .then(() => {
+        message.success('Form submitted successfully!');
+        handleOk();
+      })
+      .catch(() => {});
+  };
+
+  const fetchDataFromBackend = async () => {
+    try {
+      // Make a request to your backend using Axios
+      const response = await axios.get(
+        `https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/disable_enable_update?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3}`,
+      );
+
+      // Assuming your backend returns a JSON object with a property 'isEnabled'
+      const { data } = response;
+
+      // Check the backend response and update the button state accordingly
+      setButtonEnabled(false);
+      if (data.isEnabled === 'yes') {
+        setButtonEnabled(false);
+      } else {
+        setButtonEnabled(true);
+      }
+    } catch (error) {
+      // console.error('Error fetching data from backend:', error);
     }
-  }, [selectedOption1, selectedOption2]);
-
+  };
   useEffect(() => {
-    if (selectedOption1 && selectedOption2 && selectedOption3) {
-      setLoading4(true);
-
-      axios
-        .get(
-          `https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-options-for-dropdown-4?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3.join(
-            ',',
-          )}`,
-        ) // Replace with your actual API endpoint for dropdown 4 options
-        .then(response => {
-          const options = response.data;
-          options.unshift();
-          setOptions4(options);
-          setLoading4(false);
-        });
+    if (selectedOption1 && selectedOption2 && selectedOption3.length > 0) {
+      fetchDataFromBackend();
     }
   }, [selectedOption1, selectedOption2, selectedOption3]);
 
-  useEffect(() => {
-    axios
-      .get('https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-Qultivate_options-for-dropdown-5')
-      .then(response => {
-        setOptions5(response.data);
-      });
-  }, []);
-
-  useEffect(() => {
-    axios
-      .get('https://qultivateget.sdprd.oks.drekar.qualcomm.com/get-extension-request') // Replace with your actual API endpoint
-      .then(response => {
-        setExtensionRequest(response.data);
-      });
-  }, []);
-
-  const handleSelect1Change = value => {
-    setSelectedOption1(value);
-
-    // Clear second and third dropdowns when the first dropdown changes
-    setOptions2([]);
-    setSelectedOption2(null);
-    setOptions3([]);
-    setSelectedOption3([]);
-    setSelectAllOption(false);
-    localStorage.setItem('selectedOption1', value);
-  };
-
-  const handleSelect2Change = value => {
-    setSelectedOption2(value);
-
-    // Clear third dropdown when the second dropdown changes
-    setOptions3([]);
-    setSelectedOption3([]);
-    setSelectAllOption(false);
-    localStorage.setItem('selectedOption2', value);
-  };
-
-  const handleSelect3Change = value => {
-    if (value.includes('All')) {
-      setSelectedOption3(options3.filter(option => option !== 'All'));
-      setSelectAllOption(true);
-    } else {
-      // Unselect "All" option
-      setSelectedOption3(value.filter(val => val !== 'All'));
-      setSelectAllOption(false);
-    }
-    localStorage.setItem('selectedOption3', JSON.stringify(value));
-  };
-
-  // Custom function to display selected values
-  const renderSelections = () => {
-    if (selectAllOption) {
-      return ['All'];
-    }
-    return selectedOption3;
-  };
-
-  const handleSelect4Change = (value: string[]) => {
-    setSelectedOption4(value);
-    localStorage.setItem('selectedOption4', JSON.stringify(value));
-  };
-
-  const handleSelect5Change = (value: string[]) => {
-    setSelectedOption5(value);
-    localStorage.setItem('selectedOption5', JSON.stringify(value));
-  };
-
   return (
-    <>
-      <TopHeaderColor>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <div>
-            <label htmlFor="selectedOption1" style={{ fontWeight: 'bold', marginLeft: '20px' }}>
-              Project :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              style={{ width: 250, marginLeft: '20px' }}
-              placeholder="Select Project"
-              optionFilterProp="children"
-              onChange={handleSelect1Change}
-              value={selectedOption1}
-            >
-              {Array.isArray(options1)
-                ? options1.map(option => (
-                    <Option key={option} value={option}>
-                      {option}
-                    </Option>
-                  ))
-                : null}
-            </Select>
-          </div>
+    <div style={{ display: 'flex', alignItems: 'center' }}>
+      <Button type="primary" onClick={showModal} disabled={!isButtonEnabled}>
+        EXTENSION
+      </Button>
+      <Modal title="APPROVAL" visible={isModalVisible} onOk={checkextention} onCancel={handleCancel}>
+        <Form
+          name="myForm"
+          initialValues={{ remember: false }}
+          onFinish={checkextention}
+          // onFinishFailed={onFinishFailed}
+          onValuesChange={(changedValues, allValues) => {
+            // Update the selectedDate when the extensionDate changes
+            if ('extensionDate' in changedValues) {
+              setSelectedDate(allValues.extensionDate);
+            }
+          }}
+        >
+          <Form.Item
+            label="Extension Date"
+            name="extensionDate"
+            rules={[{ required: false, message: 'Please select Extension Date!' }]}
+          >
+            <DatePicker style={{ width: '80%' }} disabledDate={disabledDate} onChange={date => setSelectedDate(date)} />
+            <Button type="primary" onClick={handleDateSubmit} style={{ marginLeft: '10px' }}>
+              Check
+            </Button>
+          </Form.Item>
+          <Form.Item
+            label="DV/DFT Lead"
+            name="person1"
+            rules={[{ required: true, message: 'Please enter DV/DFT Lead' }]}
+          >
+            <Input
+              value={person1Value}
+              onChange={e => setPerson1Value(e.target.value)}
+              addonAfter={
+                <Button type="primary" onClick={handlePerson1Submit}>
+                  Check
+                </Button>
+              }
+            />
+          </Form.Item>
 
-          <div>
-            <label htmlFor="selectedOption2" style={{ fontWeight: 'bold' }}>
-              Revision :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              style={{ width: 250 }}
-              placeholder="Select Revision"
-              optionFilterProp="children"
-              onChange={handleSelect2Change}
-              value={selectedOption2}
-              loading={loading2}
-              disabled={!selectedOption1}
-            >
-              {Array.isArray(options2)
-                ? options2.map(option => (
-                    <Option key={option} value={option}>
-                      {option}
-                    </Option>
-                  ))
-                : null}
-            </Select>
-          </div>
+          <Form.Item label="TE Lead" name="person2" rules={[{ required: true, message: 'Please enter TE Lead' }]}>
+            <Input
+              value={person2Value}
+              onChange={e => setPerson2Value(e.target.value)}
+              addonAfter={
+                <Button type="primary" onClick={handlePerson2Submit}>
+                  Check
+                </Button>
+              }
+            />
+          </Form.Item>
+          <Form.Item label="Mail CC " name="ccperson" rules={[{ required: false, message: 'Please enter for cc' }]}>
+            <Input value={ccpersonvalue} onChange={e => setccpersonvalue(e.target.value)} />
+          </Form.Item>
 
-          <div>
-            <label htmlFor="selectedOption3" style={{ fontWeight: 'bold' }}>
-              Block :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              mode="multiple"
-              style={{ width: 250 }}
-              placeholder="Select Block"
-              optionFilterProp="children"
-              onChange={handleSelect3Change}
-              value={renderSelections()}
-              loading={loading3}
-              disabled={!selectedOption1 || !selectedOption2}
+          <Form.Item>
+            <Button
+              type="primary"
+              onClick={checkextention}
+              htmlType="submit"
+              disabled={!person1Status || !person2Status || !dateStatus}
             >
-              {Array.isArray(options3)
-                ? options3.map(option => (
-                    <Option key={option} value={option}>
-                      {option}
-                    </Option>
-                  ))
-                : null}
-            </Select>
-          </div>
-
-          <div>
-            <label htmlFor="selectedOption4" style={{ fontWeight: 'bold' }}>
-              Platform :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              mode="multiple"
-              style={{ width: 250 }}
-              placeholder="Select Fourth Dropdown"
-              optionFilterProp="children"
-              onChange={handleSelect4Change}
-              value={selectedOption4}
-              loading={loading4}
-              disabled={!selectedOption1 || !selectedOption2 || !selectedOption3}
-            >
-              {Array.isArray(options4)
-                ? options4.map(option => (
-                    <Option key={option} value={option}>
-                      {option}
-                    </Option>
-                  ))
-                : null}
-            </Select>
-          </div>
-
-          <div>
-            <label htmlFor="selectedOption5" style={{ fontWeight: 'bold' }}>
-              Pattern Type :{' '}
-            </label>
-            <Col span={24}></Col>
-            <Select
-              showSearch
-              mode="multiple"
-              style={{ width: 250 }}
-              placeholder="Select Pattern Type"
-              optionFilterProp="children"
-              onChange={handleSelect5Change}
-              value={selectedOption5}
-              loading={loading5}
-            >
-              {Array.isArray(options5)
-                ? options5.map(option => (
-                    <Option key={option} value={option}>
-                      {option}
-                    </Option>
-                  ))
-                : null}
-            </Select>
-          </div>
-        </div>
-      </TopHeaderColor>
-      
-      <div style={{ fontSize: '30px', marginTop: '10px', marginLeft: '10px' }}>Qultivate Definition</div>
-      {extensionRequest && (
-        <div style={{ fontSize: '16px', marginTop: '5px', marginLeft: '10px' }}>
-          This block is requested for extension by {extensionRequest}
-        </div>
-      )}
-
-      <Tabs defaultActiveKey="1" style={{ marginLeft: '10px' }}>
-        <TabPane tab="Qultivate_Summary" key="1">
-          <Qultivatesummery
-            selectedOption1={selectedOption1}
-            selectedOption2={selectedOption2}
-            selectedOption3={selectedOption3}
-          />
-        </TabPane>
-        <TabPane tab="Qultivate_phasing" key="2">
-          <MyTable
-            selectedOption1={selectedOption1}
-            selectedOption2={selectedOption2}
-            selectedOption3={selectedOption3}
-            selectedOption4={selectedOption4}
-            selectedOption5={selectedOption5}
-          />
-        </TabPane>
-      </Tabs>
-    </>
+              Submit
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+    </div>
   );
 };
 
-export default MySearchableDropdown;
+export default Approvalsystem;
