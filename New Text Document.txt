@@ -2,7 +2,6 @@ import React, { useState, useContext, useEffect } from 'react';
 import { Button, Modal, Form, Input, DatePicker, message } from 'antd';
 import 'antd/dist/antd.css';
 import axios from 'axios';
-// Import Moment.js correctly
 import moment from 'moment';
 import { UserContext } from 'utils/helpers';
 
@@ -29,7 +28,7 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
   const [selectedDate, setSelectedDate] = useState<moment.Moment | null>(null);
   const currentUser = useContext(UserContext);
   const [isButtonEnabled, setButtonEnabled] = useState<boolean>(false);
-  // const [username, setSelectedOption1username] = useState<string | null>(null);
+
   const showModal = () => {
     if (selectedOption1 && selectedOption2 && selectedOption3.length > 0) {
       setIsModalVisible(true);
@@ -67,12 +66,10 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
           switch (person) {
             case 'DV/DFT Lead':
               errorMessage = `${person} is not part of bdc.dftsim.leads","bdc.vector.team", "noida.dftsim.leads group`;
-              // console.log(currentUser.name);
               break;
             case 'TE Lead':
               errorMessage = `${person} is not part of sd_TELeads", "tce_TELeads", "comet_TELeads", group`;
               break;
-            // Add more cases for other types of persons if needed
             default:
               errorMessage = `${person} is not part of the required group`;
               break;
@@ -95,7 +92,7 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
     sendToBackend(person2Value, 'TE Lead', setPerson2Status);
   };
 
-  const handleDateBackend = (): Promise<AxiosResponse<any>> => {
+  const handleDateBackend = (): Promise<any> => {
     const backendUrl = 'https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/extension_date_validator';
     const formattedDate = selectedDate?.format('YYYY-MM-DD'); // Adjust the date format based on your backend requirements
 
@@ -103,7 +100,7 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
   };
 
   const handleDateSubmit = () => {
-    handleDateBackend(selectedDate)
+    handleDateBackend()
       .then(response => {
         if (response.data.response === 'yes') {
           message.success('Date is valid!');
@@ -117,27 +114,6 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
         message.error('Error communicating with the server');
         setDateStatus(false);
       });
-  };
-  const checkextention = async () => {
-    try {
-      // Make a request to your backend using Axios
-      const response = await axios.get(
-        `http://127.0.0.1:5000/Extention_details?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3}`,
-      );
-
-      // Assuming your backend returns a JSON object with a property 'isEnabled'
-      const { data } = response;
-
-      // Check the backend response and update the button state accordingly
-      console.log(data);
-      if (data === 'Date crossed') {
-        message.info('Date crossed');
-      } else {
-        onFinish (values: any);
-      }
-    } catch (error) {
-      // console.error('Error fetching data from backend:', error);
-    }
   };
 
   const onFinish = (values: any) => {
@@ -155,11 +131,33 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
       .catch(() => {});
   };
 
+  const checkextention = async () => {
+    try {
+      // Make a request to your backend using Axios
+      const response = await axios.get(
+        `http://127.0.0.1:5000/Extention_details?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3}`
+      );
+
+      // Assuming your backend returns a JSON object with a property 'isEnabled'
+      const { data } = response;
+
+      // Check the backend response and update the button state accordingly
+      console.log(data);
+      if (data === 'Date crossed') {
+        message.info('Date crossed');
+      } else {
+        onFinish(data); // Call onFinish with the data from the backend
+      }
+    } catch (error) {
+      console.error('Error fetching data from backend:', error);
+    }
+  };
+
   const fetchDataFromBackend = async () => {
     try {
       // Make a request to your backend using Axios
       const response = await axios.get(
-        `https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/disable_enable_update?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3}`,
+        `https://qultivateapproval.sdprd.oks.drekar.qualcomm.com/disable_enable_update?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3}`
       );
 
       // Assuming your backend returns a JSON object with a property 'isEnabled'
@@ -173,9 +171,10 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
         setButtonEnabled(true);
       }
     } catch (error) {
-      // console.error('Error fetching data from backend:', error);
+      console.error('Error fetching data from backend:', error);
     }
   };
+
   useEffect(() => {
     if (selectedOption1 && selectedOption2 && selectedOption3.length > 0) {
       fetchDataFromBackend();
@@ -191,8 +190,7 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
         <Form
           name="myForm"
           initialValues={{ remember: false }}
-          onFinish={checkextention}
-          // onFinishFailed={onFinishFailed}
+          onFinish={onFinish}
           onValuesChange={(changedValues, allValues) => {
             // Update the selectedDate when the extensionDate changes
             if ('extensionDate' in changedValues) {
@@ -237,24 +235,4 @@ const Approvalsystem: React.FC<Approvprops> = ({ selectedOption1, selectedOption
               }
             />
           </Form.Item>
-          <Form.Item label="Mail CC " name="ccperson" rules={[{ required: false, message: 'Please enter for cc' }]}>
-            <Input value={ccpersonvalue} onChange={e => setccpersonvalue(e.target.value)} />
-          </Form.Item>
-
-          <Form.Item>
-            <Button
-              type="primary"
-              onClick={checkextention}
-              htmlType="submit"
-              disabled={!person1Status || !person2Status || !dateStatus}
-            >
-              Submit
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
-    </div>
-  );
-};
-
-export default Approvalsystem;
+          <Form.Item label="Mail CC "
