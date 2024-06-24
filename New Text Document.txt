@@ -1,22 +1,16 @@
-import pandas as pd
+const fetchEnableTableData = async () => {
+    setLoading2(true);
+    try {
+      // Replace with your backend API endpoint for fetching table data
+      const apiUrl = `http://127.0.0.1:5000/Extention_table_data?selectedOption1=${selectedOption1}&selectedOption2=${selectedOption2}&selectedOption3=${selectedOption3}`;
 
-# Sample data
-data = {
-    'a': ['2023-01-15', '2023-03-22', '2022-12-31', '2023-06-10', '2024-07-15'],
-    'b': [1, 2, 3, 4, 5],
-    'c': [10, 20, 30, 40, 50],
-    'd': [100, 200, 300, 400, 500],
-    'e': [1000, 2000, 3000, 4000, 5000]
-}
-df = pd.DataFrame(data)
+      const response = await axios.get(apiUrl);
 
-# Ensure the dates are in datetime format
-df['a'] = pd.to_datetime(df['a'])
+      setTableData2(response.data);
 
-# Get the current date
-current_date = pd.Timestamp.now().normalize()
-
-# Filter the DataFrame to keep only the dates that haven't crossed the current date
-filtered_df = df[df['a'] >= current_date]
-
-print(filtered_df)
+      console.log(response.data);
+    } catch (error) {
+      console.error('Error fetching table data:', error);
+    }
+    setLoading2(false);
+  };
