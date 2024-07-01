@@ -1,30 +1,16 @@
-import React, { useState } from 'react';
-import { Widget, addResponseMessage } from 'react-chat-widget';
-import 'react-chat-widget/lib/styles.css';
-import axios from 'axios';
+import React from 'react';
+import './App.css';
+import Chatbot from './components/Chatbot';
 
-const Chatbot = () => {
-  const [messages, setMessages] = useState([]);
-
-  const handleNewUserMessage = async (newMessage) => {
-    // Send message to your server or chatbot service
-    const response = await axios.post('YOUR_CHATBOT_API_URL', {
-      message: newMessage,
-    });
-
-    // Add response message to the chat widget
-    addResponseMessage(response.data.reply);
-  };
-
+function App() {
   return (
-    <div className="Chatbot">
-      <Widget
-        handleNewUserMessage={handleNewUserMessage}
-        title="Chatbot"
-        subtitle="Ask me anything"
-      />
+    <div className="App">
+      <header className="App-header">
+        <h1>Welcome to Chatbot UI</h1>
+      </header>
+      <Chatbot />
     </div>
   );
-};
+}
 
-export default Chatbot;
+export default App;
