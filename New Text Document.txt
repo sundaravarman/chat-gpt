@@ -1,146 +1,32 @@
-// src/Chatbot.js
+// App.js or SearchComponent.js
 import React, { useState } from 'react';
-import './Chatbot.css';
+import { Input } from 'antd';
+import 'antd/dist/antd.css';  // Import Ant Design styles
 
-const Chatbot = () => {
-  const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
+const { Search } = Input;
 
-  const handleSend = () => {
-    if (input.trim()) {
-      const userMessage = { sender: 'user', text: input };
-      setMessages([...messages, userMessage]);
-      setInput('');
-      setTimeout(() => {
-        const botMessage = { sender: 'bot', text: 'Hello! How can I help you?' };
-        setMessages((prevMessages) => [...prevMessages, botMessage]);
-      }, 1000);
-    }
+const App = () => {
+  const [searchText, setSearchText] = useState('');
+
+  const onSearch = (value) => {
+    console.log('Search text:', value);
+    setSearchText(value);
+    // Add your search logic here
   };
 
   return (
-    <div className="chatbot">
-      <div className="chatbot-messages">
-        {messages.map((message, index) => (
-          <div key={index} className={`chatbot-message ${message.sender}`}>
-            {message.text}
-          </div>
-        ))}
-      </div>
-      <div className="chatbot-input">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-        />
-        <button onClick={handleSend}>Send</button>
-      </div>
+    <div style={{ padding: '50px' }}>
+      <Search
+        placeholder="Enter search text"
+        allowClear
+        enterButton="Search"
+        size="large"
+        onSearch={onSearch}
+        style={{ maxWidth: '400px' }}
+      />
+      <p>Search result for: {searchText}</p>
     </div>
   );
 };
 
-export default Chatbot;
-
-
-
-
-/* src/Chatbot.css */
-.chatbot {
-  width: 300px;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.chatbot-messages {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-}
-
-.chatbot-message {
-  margin-bottom: 10px;
-  padding: 10px;
-  border-radius: 10px;
-}
-
-.chatbot-message.user {
-  background-color: #d1e7dd;
-  align-self: flex-end;
-}
-
-.chatbot-message.bot {
-  background-color: #f8d7da;
-  align-self: flex-start;
-}
-
-.chatbot-input {
-  display: flex;
-  border-top: 1px solid #ccc;
-}
-
-.chatbot-input input {
-  flex: 1;
-  border: none;
-  padding: 10px;
-  border-top-left-radius: 10px;
-  border-bottom-left-radius: 10px;
-}
-
-.chatbot-input button {
-  border: none;
-  background-color: #007bff;
-  color: white;
-  padding: 10px;
-  cursor: pointer;
-  border-top-right-radius: 10px;
-  border-bottom-right-radius: 10px;
-}
-
-.chatbot-input button:hover {
-  background-color: #0056b3;
-}
-
-
-
-
-
-
-
-// src/App.js
-import React from 'react';
-import Chatbot from './Chatbot';
-import './App.css';
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Chatbot App</h1>
-      </header>
-      <main>
-        <Chatbot />
-      </main>
-    </div>
-  );
-}
-
 export default App;
-
-/* src/App.css */
-.App {
-  text-align: center;
-}
-
-.App-header {
-  background-color: #282c34;
-  padding: 20px;
-  color: white;
-}
-
-main {
-  padding: 20px;
-}
