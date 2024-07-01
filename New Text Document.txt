@@ -1,26 +1,43 @@
-.App {
-  text-align: center;
-}
+import React from 'react';
+import ChatBot from 'react-simple-chatbot';
+import { ThemeProvider } from 'styled-components';
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
+const steps = [
+  {
+    id: '1',
+    message: 'What is your name?',
+    trigger: '2',
+  },
+  {
+    id: '2',
+    user: true,
+    trigger: '3',
+  },
+  {
+    id: '3',
+    message: 'Hi {previousValue}, nice to meet you!',
+    end: true,
+  },
+];
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
+const theme = {
+  background: '#f5f8fb',
+  fontFamily: 'Arial, Helvetica, sans-serif',
+  headerBgColor: '#00bfff',
+  headerFontColor: '#fff',
+  headerFontSize: '15px',
+  botBubbleColor: '#00bfff',
+  botFontColor: '#fff',
+  userBubbleColor: '#fff',
+  userFontColor: '#4a4a4a',
+};
 
-.Chatbot {
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  margin: 20px;
-}
+const Chatbot = () => {
+  return (
+    <ThemeProvider theme={theme}>
+      <ChatBot steps={steps} />
+    </ThemeProvider>
+  );
+};
+
+export default Chatbot;
