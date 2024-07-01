@@ -1,16 +1,26 @@
-import React from 'react';
-import './App.css';
-import Chatbot from './components/Chatbot';
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h1>Welcome to Chatbot UI</h1>
-      </header>
-      <Chatbot />
-    </div>
-  );
+.App {
+  text-align: center;
 }
 
-export default App;
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.Chatbot {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  margin: 20px;
+}
