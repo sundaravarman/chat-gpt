@@ -30,3 +30,67 @@ const App = () => {
 };
 
 export default App;
+
+
+
+// ChatBot.js
+import React, { useState } from 'react';
+import { Input, List, Avatar, Typography } from 'antd';
+import 'antd/dist/antd.css';
+
+const { Search } = Input;
+const { Text } = Typography;
+
+const ChatBot = () => {
+  const [messages, setMessages] = useState([
+    {
+      sender: 'bot',
+      text: 'Hello! How can I help you today?',
+    },
+  ]);
+
+  const onSearch = (value) => {
+    if (!value.trim()) return;
+    
+    // Add user message
+    setMessages([...messages, { sender: 'user', text: value }]);
+
+    // Simulate bot response
+    setTimeout(() => {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { sender: 'bot', text: `You said: "${value}"` },
+      ]);
+    }, 1000); // Simulate response time
+  };
+
+  return (
+    <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto' }}>
+      <List
+        itemLayout="horizontal"
+        dataSource={messages}
+        renderItem={(item) => (
+          <List.Item>
+            <List.Item.Meta
+              avatar={
+                <Avatar style={{ backgroundColor: item.sender === 'bot' ? '#87d068' : '#1890ff' }}>
+                  {item.sender === 'bot' ? 'B' : 'U'}
+                </Avatar>
+              }
+              description={<Text>{item.text}</Text>}
+            />
+          </List.Item>
+        )}
+      />
+      <Search
+        placeholder="Type your message"
+        enterButton="Send"
+        size="large"
+        onSearch={onSearch}
+        style={{ marginTop: '20px' }}
+      />
+    </div>
+  );
+};
+
+export default ChatBot;
