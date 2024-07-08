@@ -16,17 +16,28 @@ icon.addEventListener('click', function() {
   searchBar.style.left = '60px'; // Adjusted to prevent overlap with the larger icon
   searchBar.style.top = '10px';
   searchBar.style.zIndex = '9999';
+  searchBar.style.backgroundColor = 'white';
+  searchBar.style.border = '1px solid #ccc';
+  searchBar.style.padding = '10px';
+  searchBar.style.boxShadow = '0px 0px 10px rgba(0,0,0,0.1)';
   searchBar.innerHTML = `
     <input type="text" id="extensionSearchInput" placeholder="Type your search query" style="padding: 5px; width: 200px; box-sizing: border-box;">
     <button id="extensionSearchButton" style="padding: 5px;">Search</button>
+    <button id="extensionCloseButton" style="padding: 5px; margin-left: 5px;">Close</button>
   `;
   document.body.appendChild(searchBar);
 
   document.getElementById('extensionSearchButton').addEventListener('click', function() {
     const query = document.getElementById('extensionSearchInput').value;
     if (query) {
-      window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank');
+      // Open the search results in a new window
+      window.open('https://www.google.com/search?q=' + encodeURIComponent(query), '_blank', 'width=800,height=600');
     }
+  });
+
+  document.getElementById('extensionCloseButton').addEventListener('click', function() {
+    searchBar.remove();
+    document.body.appendChild(icon);  // Add the icon back
   });
 
   icon.remove();
