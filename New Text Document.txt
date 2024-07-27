@@ -1,107 +1,21 @@
 import React from 'react';
-import './App.css';
 
-function App() {
+const SearchBar = () => {
   return (
-    <div className="App">
-      <header className="App-header">
-        <p>
-          This is an always-on-top window!
-        </p>
-      </header>
+    <div className="flex justify-center items-center mt-10">
+      <input
+        type="text"
+        placeholder="Search..."
+        className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      />
+      <button
+        type="submit"
+        className="ml-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      >
+        Search
+      </button>
     </div>
   );
-}
+};
 
-export default App;
-
-
-
-
-.App {
-  text-align: center;
-}
-
-
-
-
-
-######
-
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-const isDev = require('electron-is-dev');
-
-function createWindow () {
-  const win = new BrowserWindow({
-    width: 800,
-    height: 100,
-    alwaysOnTop: true,
-    frame: false,
-    transparent: true,
-    skipTaskbar: true,
-    webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
-    }
-  });
-
-  win.setAlwaysOnTop(true, 'screen-saver');
-
-  win.loadURL(
-    isDev
-      ? 'http://localhost:3000'
-      : `file://${path.join(__dirname, 'build', 'index.html')}`
-  );
-}
-
-app.whenReady().then(createWindow);
-
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
-});
-
-
-
-
-{
-  "name": "always-on-top-app",
-  "version": "0.1.0",
-  "private": true,
-  "dependencies": {
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "react-scripts": "5.0.0",
-    "electron": "^16.0.0",
-    "electron-is-dev": "^2.0.0",
-    "concurrently": "^6.2.0",
-    "wait-on": "^5.3.0"
-  },
-  "scripts": {
-    "start": "concurrently \"npm:start-react\" \"npm:start-electron\"",
-    "start-react": "react-scripts start",
-    "start-electron": "wait-on http://localhost:3000 && electron .",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "main": "main.js"
-}
-
-
-.App-header {
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  padding: 20px;
-  position: absolute;
-  top: 0;
-  width: 100%;
-}
+export default SearchBar;
