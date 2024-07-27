@@ -3,7 +3,7 @@ import './index.css';
 
 function App() {
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-start h-screen mt-10">
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-4">Search Bar Example</h1>
         <div className="flex justify-center items-center">
