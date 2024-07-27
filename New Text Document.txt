@@ -2,11 +2,17 @@ import React from 'react';
 import './index.css';
 
 function App() {
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    // Handle the search logic here
+    alert('Search button pressed or Enter key pressed');
+  };
+
   return (
     <div className="flex justify-center items-start h-screen mt-10">
       <div className="text-center">
         <h1 className="text-3xl font-bold mb-4">Search Bar Example</h1>
-        <div className="flex justify-center items-center">
+        <form onSubmit={handleSubmit} className="flex justify-center items-center">
           <input
             type="text"
             placeholder="Search..."
@@ -18,7 +24,7 @@ function App() {
           >
             Search
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
